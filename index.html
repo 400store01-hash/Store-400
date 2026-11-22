@@ -2051,8 +2051,7 @@ async function initApp() {
     if (currentUser?.isAdmin) await checkSavedDiskHandleOnStartup();
     await restoreFromExternalCloud(true);
 }
-
-function saveAppState(triggerCloud = true) {
+ function saveAppState(triggerCloud = true) {
     if (el('pasteBehaviorSelect')) appSettings.pasteMode = el('pasteBehaviorSelect').value;
     const st = getFullDatabasePayload(false);
     saveToIndexedDB(st);
@@ -2847,7 +2846,7 @@ function pCPR(p) {
     if (p.length === 9) {
         const f = nc(p[0]), l = nc(p[8]);
         if (l.length >= 8 && f.length <= 5) { const d = dBar(l); return { season: nc(p[0]) || "-", material: p[1] || "-", drop: nc(p[2]) || "-", mold: nc(p[3]) || "-", colorNum: nc(p[4]) || "-", color: p[5] || "-", size: nc(p[6]) || "-", name: p[7] || "-", story: d?.st3 || p[7] || "-", code: l }; }
-        const d = dBar(f); return { code: f, name: p[1] || "-", story: d?.st3 || p[1] || "-", size: nc(p[2]) || "-", color: p[3] || "-", colorNum: nc(p[4]) || "-", mold: nc(p[5]) || "-", drop: nc(p[6]) || "-", material: p[7] || "-", season: nc(p[8]) || "-" };
+        const d = dBar(f); return { code: f, name: p[1] || "-", story: d?.st3 || p[1] || "-", size: nc(p[2]) || "-", color: p[3] || "-", colorNum: nc(p[4]) || "-", mold: p[5] || "-", drop: p[6] || "-", material: p[7] || "-", season: nc(p[8]) || "-" };
     }
     const c = nc(p[0]), d = dBar(c); return { code: c, name: p[1] || "-", story: p[2] || d?.st3 || "-", size: d?.sz2 || "-", color: "-", colorNum: d?.cn2 || "-", mold: d?.mld || "-", drop: d?.drp || "-", material: p[3] || p[2] || "-", season: d?.sea || "-" };
 }
@@ -2950,6 +2949,7 @@ function switchTab(t) {
     if (t === 'archive') { populateArchiveDatalistsAndDropdown(); renderArchiveView(); }
     if (t === 'requests') { renderManagerRequestsCenter(); }
     if (t === 'analytics') renderQualityAnalyticsDashboard();
+    if (t === 'hallsmap') setTimeout(() => renderAdminHallsMap(), 80);
     if (t === 'sheet5') { renderUsersManagementTable(); switchSettingsSubTab(activeSettingsSubTab); }
 }
 
@@ -3849,12 +3849,14 @@ function getFullDatabasePayload(lightStaffMode = false) {
             lightStaffUpdate: true,
             timestamp: new Date().toISOString(),
             archiveList,
-            restoreRequestsList
+            restoreRequestsList,
+            staffLiveLocations
         };
     }
     return {
         timestamp: new Date().toISOString(), dbVersion: (currentDbVersion || 51) + 1, labelsLocked: isLabelsLocked, customLabels: customLabelsMap,
         catalogList, shortcutList, orderData, palmData, archiveList, restoreRequestsList, activeEditingArchiveId,
+        hallLocationsList, staffLiveLocations,
         logo: el('logoImg') && !el('logoImg').classList.contains('hidden') ? el('logoImg').src : (localStorage.getItem('company400_logo') || ""),
         settings: appSettings
     };
@@ -3872,6 +3874,10 @@ async function applyImportedDatabasePayload(data, isSilentCloud = false) {
     if (Array.isArray(data.shortcutList)) shortcutList = data.shortcutList;
     if (Array.isArray(data.archiveList)) archiveList = data.archiveList;
     if (Array.isArray(data.restoreRequestsList)) restoreRequestsList = data.restoreRequestsList;
+    if (Array.isArray(data.hallLocationsList)) hallLocationsList = data.hallLocationsList;
+    if (data.staffLiveLocations && typeof data.staffLiveLocations === 'object') {
+        staffLiveLocations = { ...staffLiveLocations, ...data.staffLiveLocations };
+    }
 
     if (!isSilentCloud) {
         orderData = data.orderData || [];
@@ -3894,6 +3900,7 @@ async function applyImportedDatabasePayload(data, isSilentCloud = false) {
     populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updatePendingApprovalsUI();
     if (activeTab === 'requests') renderManagerRequestsCenter();
     if (activeTab === 'archive') renderArchiveView();
+    if (activeTab === 'hallsmap' && currentUser?.isAdmin) renderAdminHallsMap();
     recalculateAndRender(false);
 }
 
@@ -3951,6 +3958,7 @@ async function manualCloudPullNow() {
     updatePendingApprovalsUI();
     if (activeTab === 'requests') renderManagerRequestsCenter();
     if (activeTab === 'archive') renderArchiveView();
+    if (activeTab === 'hallsmap' && currentUser?.isAdmin) renderAdminHallsMap();
     const pendingApp = archiveList.filter(a => a.approvalStatus === 'PENDING').length;
     const pendingRes = restoreRequestsList.filter(r => r.status === 'PENDING').length;
     showPasteToast("تم التحديث ✓", `الاعتمادات: ${pendingApp} | الاستعادة: ${pendingRes}`);
@@ -4116,61 +4124,35 @@ function exportResultsToExcel() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sr), "التشييك");
     XLSX.writeFile(wb, "Ahmad_Check_Pro.xlsx");
 }
+
 // ================= 21. المزامنة الدورية التلقائية بالخلفية =================
 let periodicCloudPullTimer = null;
-const AUTO_PULL_INTERVAL_MS = 75000; // 75000 مللي ثانية = دقيقة و15 ثانية (يمكنك تغييرها إلى 60000 لدقيقة واحدة)
+const AUTO_PULL_INTERVAL_MS = 75000;
 
 function startPeriodicCloudAutoSync() {
     if (periodicCloudPullTimer) clearInterval(periodicCloudPullTimer);
     periodicCloudPullTimer = setInterval(async () => {
-        // التخطي إذا كانت الصفحة غير نشطة أو هناك نافذة منبثقة مفتوحة أو جارٍ الرفع للسحابة
         if (document.hidden || autoCloudSaveTimer) return;
         if (isModalOpen('passwordModal') || isModalOpen('saveArchiveModal') || isModalOpen('manualPasteModal') || isModalOpen('restoreRequestModal')) return;
-
         await restoreFromExternalCloud(true);
     }, AUTO_PULL_INTERVAL_MS);
 }
 
-// تفعيل المؤقت تلقائياً عند تسجيل الدخول
 const _origInitAppForAutoSync = initApp;
 initApp = async function () {
     await _origInitAppForAutoSync();
     startPeriodicCloudAutoSync();
 };
-  // ================= 22. خريطة مواقع الصالات وسجلاتها (للمدير فقط) =================
-let hallLocationsList = []; // [{ id, hallName, lat, lng }]
+
+// ================= 22. خريطة مواقع الصالات وسجلاتها و GPS =================
+let hallLocationsList = [];
+let staffLiveLocations = {};
+let lastStaffGpsData = null;
 let adminLeafletMap = null;
 let adminMapMarkersLayer = null;
+let mapSearchMarker = null;
+let gpsUserMarker = null;
 let selectedMapHallId = null;
-
-// دمج المواقع مع الحفظ والاستعادة السحابية تلقائياً
-const _origGetPayloadMap = getFullDatabasePayload;
-getFullDatabasePayload = function(lightStaffMode = false) {
-    const payload = _origGetPayloadMap(lightStaffMode);
-    if (!lightStaffMode) payload.hallLocationsList = hallLocationsList;
-    return payload;
-};
-
-const _origApplyPayloadMap = applyImportedDatabasePayload;
-applyImportedDatabasePayload = async function(data, isSilentCloud = false) {
-    if (data && Array.isArray(data.hallLocationsList)) hallLocationsList = data.hallLocationsList;
-    await _origApplyPayloadMap(data, isSilentCloud);
-    if (activeTab === 'hallsmap') renderAdminHallsMap();
-};
-
-const _origInitAppMap = initApp;
-initApp = async function() {
-    await _origInitAppMap();
-    const svd = await loadFromIndexedDB();
-    if (svd && Array.isArray(svd.hallLocationsList)) hallLocationsList = svd.hallLocationsList;
-};
-
-const _origSwitchTabMap = switchTab;
-switchTab = function(t) {
-    if (t === 'hallsmap' && !currentUser?.isAdmin) return;
-    _origSwitchTabMap(t);
-    if (t === 'hallsmap') setTimeout(() => renderAdminHallsMap(), 80);
-};
 
 function renderAdminHallsMap() {
     if (!currentUser?.isAdmin || typeof L === 'undefined') return;
@@ -4178,14 +4160,12 @@ function renderAdminHallsMap() {
     if (!box) return;
 
     if (!adminLeafletMap) {
-        // التمركز الافتراضي (اللاذقية / سوريا — يمكنك تغييره لأي إحداثيات)
         adminLeafletMap = L.map('adminHallsMapContainer').setView([35.5317, 35.7901], 8);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(adminLeafletMap);
         adminMapMarkersLayer = L.layerGroup().addTo(adminLeafletMap);
 
-        // عند النقر على الخريطة: تعبئة الإحداثيات تلقائياً لتسهيل إضافة صالة
         adminLeafletMap.on('click', (e) => {
             const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
             if (el('mapHallCoordsInput')) el('mapHallCoordsInput').value = `${lat}, ${lng}`;
@@ -4203,6 +4183,29 @@ function renderAdminHallsMap() {
         marker.bindTooltip(`<b>${loc.hallName}</b> (${hallRecords.length} طلبية)`, { direction: 'top' });
         marker.on('click', () => openHallRecordFromMap(loc.id));
         bounds.push([loc.lat, loc.lng]);
+    });
+
+    Object.values(staffLiveLocations || {}).forEach(st => {
+        if (!st || typeof st.lat !== 'number' || typeof st.lng !== 'number') return;
+        const timeStr = st.updatedAt ? new Date(st.updatedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+        const staffMarker = L.circleMarker([st.lat, st.lng], {
+            radius: 9,
+            color: '#7c3aed',
+            fillColor: '#8b5cf6',
+            fillOpacity: 0.65,
+            weight: 2
+        }).addTo(adminMapMarkersLayer);
+
+        staffMarker.bindTooltip(`موظف: <b>${st.userName || 'موظف'}</b> (${timeStr})`, { direction: 'top' });
+        staffMarker.bindPopup(`
+            <div style="font-size:12px;line-height:1.6">
+                <b>الموظف:</b> ${st.userName || 'موظف'}<br>
+                <b>الدقة التقريبية:</b> ~${st.accuracy || 0} متر<br>
+                <b>آخر تحديث:</b> ${timeStr || '-'}<br>
+                <b>الإحداثيات:</b> <span dir="ltr">${st.lat}, ${st.lng}</span>
+            </div>
+        `);
+        bounds.push([st.lat, st.lng]);
     });
 
     if (bounds.length > 0) adminLeafletMap.fitBounds(bounds, { padding: [45, 45], maxZoom: 14 });
@@ -4281,7 +4284,6 @@ function deleteSelectedHallLocation() {
     renderAdminHallsMap();
     saveAppState(true);
 }
-  let mapSearchMarker = null;
 
 async function searchMapAreaByName() {
     if (!currentUser?.isAdmin || !adminLeafletMap) return;
@@ -4320,8 +4322,6 @@ async function searchMapAreaByName() {
         alert("تعذر إتمام البحث حالياً. تأكد من توفر الاتصال بالإنترنت.");
     }
 }
-  // ================= تجربة GPS مؤقتة (يمكن حذفها بالكامل لاحقاً) =================
-let gpsUserMarker = null;
 
 function runGpsTestOnMap() {
     const out = el('gpsTestResult');
@@ -4371,34 +4371,6 @@ function runGpsTestOnMap() {
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
 }
-  // ================= تحديد موقع GPS للموظف =================
-let lastStaffGpsData = null;
-let staffLiveLocations = {}; // { [staffKey]: { userName, lat, lng, accuracy, updatedAt } }
-
-const _origGetPayloadStaffGps = getFullDatabasePayload;
-getFullDatabasePayload = function(lightStaffMode = false) {
-    const payload = _origGetPayloadStaffGps(lightStaffMode);
-    if (!lightStaffMode) payload.staffLiveLocations = staffLiveLocations;
-    return payload;
-};
-
-const _origApplyPayloadStaffGps = applyImportedDatabasePayload;
-applyImportedDatabasePayload = async function(data, isSilentCloud = false) {
-    if (data && data.staffLiveLocations && typeof data.staffLiveLocations === 'object') {
-        staffLiveLocations = { ...staffLiveLocations, ...data.staffLiveLocations };
-    }
-    await _origApplyPayloadStaffGps(data, isSilentCloud);
-    if (activeTab === 'hallsmap' && currentUser?.isAdmin) renderAdminHallsMap();
-};
-
-const _origInitAppStaffGps = initApp;
-initApp = async function() {
-    await _origInitAppStaffGps();
-    const svd = await loadFromIndexedDB();
-    if (svd && svd.staffLiveLocations && typeof svd.staffLiveLocations === 'object') {
-        staffLiveLocations = { ...staffLiveLocations, ...svd.staffLiveLocations };
-    }
-};
 
 function captureStaffGpsLocation(silent = false) {
     const statusEl = el('staffGpsStatusText');
@@ -4437,9 +4409,12 @@ function captureStaffGpsLocation(silent = false) {
                 el('mapHallCoordsInput').value = `${lat}, ${lng}`;
             }
 
-            try {
-                if (typeof saveAppState === 'function') await saveAppState(true);
-            } catch (e) {}
+            await saveToIndexedDB(getFullDatabasePayload(false));
+            if (!currentUser?.isAdmin) {
+                await syncToExternalCloud(true, true, true);
+            } else {
+                saveAppState(true);
+            }
 
             if (activeTab === 'hallsmap' && currentUser?.isAdmin) {
                 renderAdminHallsMap();
@@ -4461,33 +4436,6 @@ function captureStaffGpsLocation(silent = false) {
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
 }
-2. إظهار علامات مواقع الموظفين على خريطة المدير (renderAdminHallsMap)
-داخل دالة renderAdminHallsMap()، ابحث عن السطر الذي ينفذ adminMapMarkersLayer.clearLayers();، وأضف بعده مباشرة هذا الجزء لرسم دوائر/علامات مواقع الموظفين:
-
-JavaScript
-    // رسم مواقع الموظفين الملتقطة حديثاً بلون بنفسجي مميز
-    Object.values(staffLiveLocations || {}).forEach(st => {
-        if (!st || typeof st.lat !== 'number' || typeof st.lng !== 'number') return;
-        const timeStr = st.updatedAt ? new Date(st.updatedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
-        const staffMarker = L.circleMarker([st.lat, st.lng], {
-            radius: 9,
-            color: '#7c3aed',
-            fillColor: '#8b5cf6',
-            fillOpacity: 0.65,
-            weight: 2
-        }).addTo(adminMapMarkersLayer);
-
-        staffMarker.bindTooltip(`موظف: <b>${st.userName || 'موظف'}</b> (${timeStr})`, { direction: 'top' });
-        staffMarker.bindPopup(`
-            <div style="font-size:12px;line-height:1.6">
-                <b>الموظف:</b> ${st.userName || 'موظف'}<br>
-                <b>الدقة التقريبية:</b> ~${st.accuracy || 0} متر<br>
-                <b>آخر تحديث:</b> ${timeStr || '-'}<br>
-                <b>الإحداثيات:</b> <span dir="ltr">${st.lat}, ${st.lng}</span>
-            </div>
-        `);
-        bounds.push([st.lat, st.lng]);
-    }
 </script>
 </body>
-</html>
+</html> 
