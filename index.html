@@ -436,7 +436,7 @@ body.no-perm-swaps .perm-swaps{display:none!important}
             <span><span data-label-id="lbl_order_ref_prefix" class="editable-label">الصالة: </span><strong data-label-id="lbl_order_ref_val" id="orderRefTitle" class="editable-label text-slate-800">طلبية #101</strong></span>
             <span>•</span>
             <span contenteditable="true" id="headerDateText" class="font-mono text-slate-600" dir="ltr">21/11/2026</span>
-            <span id="reportHeaderTitle" data-label-id="lbl_report_header_title" class="editable-label hidden">تقرير تشييك ومطابقة الطلبية المرسلة (البالم)</span>
+            <span id="reportHeaderTitle" data-label-id="lbl_report_header_title" class="editable-label hidden">تقرير التشييك والمطابقة الطلبية  </span>
           </div>
         </div>
       </div>
@@ -2098,7 +2098,7 @@ function renderSizeRunRadarModal(filterMode) {
 function buildWhatsAppReportFromDataset(hallTitle, dateStr, engineResult, preparerName = '') {
     const k = engineResult.kpis, mR = engineResult.mR || [], wI = engineResult.wI || [];
     const incShort = el('waOptIncludeShortages')?.checked !== false, incBroken = el('waOptIncludeBrokenRuns')?.checked !== false, incWrong = el('waOptIncludeWrong')?.checked !== false;
-    const lines = [`*تقرير تشييك ومطابقة البالم — ${hallTitle}*`, `▪ التاريخ: ${dateStr}${preparerName ? ` | المحضّر: *${preparerName}*` : ''}`, `──────────────────`, `▪ إجمالي المطلوب: *${k.tRP}* قطعة (${k.tOI} صنف)`, `▪ إجمالي المسحوب الفعلي: *${k.tSP}* قطعة`, `▪ نسبة المطابقة: *${k.mP}%* (${k.mC} صنف سليم)`, `▪ ملخص الفروقات: نقص (*${k.sS}*) | زيادة (*${k.oS}*) | خاطئ (*${k.wQT}*)`];
+    const lines = [`*تقرير التشييك والمطابقة  — ${hallTitle}*`, `▪ التاريخ: ${dateStr}${preparerName ? ` | المحضّر: *${preparerName}*` : ''}`, `──────────────────`, `▪ إجمالي المطلوب: *${k.tRP}* قطعة (${k.tOI} صنف)`, `▪ إجمالي المسحوب الفعلي: *${k.tSP}* قطعة`, `▪ نسبة المطابقة: *${k.mP}%* (${k.mC} صنف سليم)`, `▪ ملخص الفروقات: نقص (*${k.sS}*) | زيادة (*${k.oS}*) | خاطئ (*${k.wQT}*)`];
     if (incBroken) { const brokenRuns = computeSizeRunRadarListFromRows(mR).filter(s => s.status === 'BROKEN'); if (brokenRuns.length > 0) { lines.push(``, `⚠️ *تنبيهات كسر السيري (${brokenRuns.length} قصة):*`); brokenRuns.slice(0, 8).forEach(b => lines.push(`- قصة *${b.storyDisplay}* (${b.name}): ناقص مقاس [${b.missingSizes.map(x => x.size).join('، ')}]`)); } }
     if (incShort) { const shortages = mR.filter(r => r.diff < 0).sort((a, b) => a.diff - b.diff); if (shortages.length > 0) { lines.push(``, `🔻 *أهم النواقص غير المعوّضة (${shortages.length} صنف):*`); shortages.slice(0, 10).forEach(s => lines.push(`- ${s.name} (قصة ${s.sp?.stN || '-'} | ${s.sp?.cName || '-'} | مقاس ${s.sp?.szV || '-'}): ناقص *${Math.abs(s.diff)}*`)); if (shortages.length > 10) lines.push(`... وعدد (${shortages.length - 10}) أصناف أخرى.`); } }
     if (incWrong && wI.length > 0) { lines.push(``, `❌ *أكواد مسحوبة غير مطلوبة (${wI.length} كود / ${k.wQT} قطعة):*`); wI.slice(0, 8).forEach(w => lines.push(`- ${w.raw} (${w.name}): عدد *${w.qty}*`)); }
