@@ -2009,7 +2009,11 @@ async function verifyPassword() {
     if (el('passwordError')) el('passwordError').classList.add('hidden');
     el('passwordInput').blur();
     await initApp();
-}
+  if (currentUser && !currentUser.isAdmin && typeof captureStaffGpsLocation === 'function') {
+        setTimeout(() => {
+            captureStaffGpsLocation(true);
+        }, 600);
+    }
 
 async function initApp() {
     const emb = window.INITIAL_APP_STATE || {}, svd = await loadFromIndexedDB();
