@@ -511,7 +511,20 @@ body.no-perm-swaps .perm-swaps{display:none!important}
 
   <main class="flex-1 max-w-[99%] w-full mx-auto px-3 py-3">
     <div id="mainPrintContainer">
-
+<!-- شريط فحص موقع GPS للموظف -->
+<div id="staffGpsBanner" class="erp-card p-3 flex flex-wrap items-center justify-between gap-2 bg-slate-50 border-slate-200 no-print">
+  <div class="text-xs space-y-0.5">
+    <div class="font-black text-slate-900 flex items-center gap-1.5">
+      <i class="fa-solid fa-location-dot text-indigo-600"></i>
+      <span>تحديد موقع الموظف (GPS)</span>
+    </div>
+    <div id="staffGpsStatusText" class="text-[11px] text-slate-600">بانتظار تحديد الموقع...</div>
+  </div>
+  <button type="button" onclick="captureStaffGpsLocation(false)" class="btn-primary !py-1.5 !text-xs">
+    <i class="fa-solid fa-crosshairs"></i>
+    <span>تحديد موقعي الآن</span>
+  </button>
+</div>
       <!-- شريط تنبيه المدير بوجود طلبات جديدة -->
       <div id="pendingApprovalsAlertBanner" class="hidden perm-admin-only mb-3 erp-card !border-amber-300 !bg-amber-50/90 px-4 py-2.5 flex flex-wrap justify-between items-center gap-2 no-print">
         <div class="flex items-center gap-2 text-xs text-amber-950 font-bold">
@@ -4354,6 +4367,56 @@ function runGpsTestOnMap() {
                     : "انتهت مهلة طلب الموقع.";
             if (out) out.textContent = `GPS Error (${err.code}): ${msg}`;
             alert(msg);
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+}
+  // ================= تحديد موقع GPS للموظف =================
+let lastStaffGpsData = null;
+
+function captureStaffGpsLocation(silent = false) {
+    const statusEl = el('staffGpsStatusText');
+    if (!navigator.geolocation) {
+        if (statusEl) statusEl.textContent = "المتصفح لا يدعم تحديد الموقع الجغرافي.";
+        if (!silent) alert("المتصفح لا يدعم خدمة تحديد الموقع الجغرافي.");
+        return;
+    }
+
+    if (statusEl) statusEl.textContent = "جاري طلب إذن الموقع والتقاط الإحداثيات...";
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = Number(pos.coords.latitude.toFixed(6));
+            const lng = Number(pos.coords.longitude.toFixed(6));
+            const acc = Math.round(pos.coords.accuracy || 0);
+
+            lastStaffGpsData = {
+                lat,
+                lng,
+                accuracy: acc,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (statusEl) {
+                statusEl.innerHTML = `تم تحديد الموقع بنجاح — <span class="font-mono font-bold text-emerald-700" dir="ltr">${lat}, ${lng}</span> (دقة ~${acc} م)`;
+            }
+
+            if (el('mapHallCoordsInput')) {
+                el('mapHallCoordsInput').value = `${lat}, ${lng}`;
+            }
+
+            if (!silent) {
+                showPasteToast("تم التقاط الموقع 📍", `الإحداثيات: ${lat}, ${lng} (دقة ~${acc} م)`);
+            }
+        },
+        (err) => {
+            let msg = "تعذر تحديد الموقع حالياً.";
+            if (err.code === 1) msg = "تم رفض إذن الموقع — فعّل إذن الموقع من إعدادات المتصفح.";
+            else if (err.code === 2) msg = "تعذر الوصول إلى إشارة الموقع — تأكد من تشغيل GPS/الموقع.";
+            else if (err.code === 3) msg = "انتهت مهلة تحديد الموقع.";
+
+            if (statusEl) statusEl.textContent = msg;
+            if (!silent) alert(msg);
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
