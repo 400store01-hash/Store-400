@@ -4373,6 +4373,32 @@ function runGpsTestOnMap() {
 }
   // ================= تحديد موقع GPS للموظف =================
 let lastStaffGpsData = null;
+let staffLiveLocations = {}; // { [staffKey]: { userName, lat, lng, accuracy, updatedAt } }
+
+const _origGetPayloadStaffGps = getFullDatabasePayload;
+getFullDatabasePayload = function(lightStaffMode = false) {
+    const payload = _origGetPayloadStaffGps(lightStaffMode);
+    if (!lightStaffMode) payload.staffLiveLocations = staffLiveLocations;
+    return payload;
+};
+
+const _origApplyPayloadStaffGps = applyImportedDatabasePayload;
+applyImportedDatabasePayload = async function(data, isSilentCloud = false) {
+    if (data && data.staffLiveLocations && typeof data.staffLiveLocations === 'object') {
+        staffLiveLocations = { ...staffLiveLocations, ...data.staffLiveLocations };
+    }
+    await _origApplyPayloadStaffGps(data, isSilentCloud);
+    if (activeTab === 'hallsmap' && currentUser?.isAdmin) renderAdminHallsMap();
+};
+
+const _origInitAppStaffGps = initApp;
+initApp = async function() {
+    await _origInitAppStaffGps();
+    const svd = await loadFromIndexedDB();
+    if (svd && svd.staffLiveLocations && typeof svd.staffLiveLocations === 'object') {
+        staffLiveLocations = { ...staffLiveLocations, ...svd.staffLiveLocations };
+    }
+};
 
 function captureStaffGpsLocation(silent = false) {
     const statusEl = el('staffGpsStatusText');
@@ -4385,28 +4411,42 @@ function captureStaffGpsLocation(silent = false) {
     if (statusEl) statusEl.textContent = "جاري طلب إذن الموقع والتقاط الإحداثيات...";
 
     navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
             const lat = Number(pos.coords.latitude.toFixed(6));
             const lng = Number(pos.coords.longitude.toFixed(6));
             const acc = Math.round(pos.coords.accuracy || 0);
+            const actorName = (currentUser?.name || currentUser?.username || 'موظف').trim();
+            const actorKey = nw(actorName) || 'staff_default';
 
-            lastStaffGpsData = {
+            const gpsRecord = {
+                userName: actorName,
                 lat,
                 lng,
                 accuracy: acc,
                 updatedAt: new Date().toISOString()
             };
 
+            lastStaffGpsData = gpsRecord;
+            staffLiveLocations[actorKey] = gpsRecord;
+
             if (statusEl) {
                 statusEl.innerHTML = `تم تحديد الموقع بنجاح — <span class="font-mono font-bold text-emerald-700" dir="ltr">${lat}, ${lng}</span> (دقة ~${acc} م)`;
             }
 
-            if (el('mapHallCoordsInput')) {
+            if (el('mapHallCoordsInput') && currentUser?.isAdmin) {
                 el('mapHallCoordsInput').value = `${lat}, ${lng}`;
             }
 
+            try {
+                if (typeof saveAppState === 'function') await saveAppState(true);
+            } catch (e) {}
+
+            if (activeTab === 'hallsmap' && currentUser?.isAdmin) {
+                renderAdminHallsMap();
+            }
+
             if (!silent) {
-                showPasteToast("تم التقاط الموقع 📍", `الإحداثيات: ${lat}, ${lng} (دقة ~${acc} م)`);
+                showPasteToast("تم التقاط الموقع ومزامنته 📍", `الإحداثيات: ${lat}, ${lng} (دقة ~${acc} م)`);
             }
         },
         (err) => {
@@ -4421,6 +4461,33 @@ function captureStaffGpsLocation(silent = false) {
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
 }
+2. إظهار علامات مواقع الموظفين على خريطة المدير (renderAdminHallsMap)
+داخل دالة renderAdminHallsMap()، ابحث عن السطر الذي ينفذ adminMapMarkersLayer.clearLayers();، وأضف بعده مباشرة هذا الجزء لرسم دوائر/علامات مواقع الموظفين:
+
+JavaScript
+    // رسم مواقع الموظفين الملتقطة حديثاً بلون بنفسجي مميز
+    Object.values(staffLiveLocations || {}).forEach(st => {
+        if (!st || typeof st.lat !== 'number' || typeof st.lng !== 'number') return;
+        const timeStr = st.updatedAt ? new Date(st.updatedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+        const staffMarker = L.circleMarker([st.lat, st.lng], {
+            radius: 9,
+            color: '#7c3aed',
+            fillColor: '#8b5cf6',
+            fillOpacity: 0.65,
+            weight: 2
+        }).addTo(adminMapMarkersLayer);
+
+        staffMarker.bindTooltip(`موظف: <b>${st.userName || 'موظف'}</b> (${timeStr})`, { direction: 'top' });
+        staffMarker.bindPopup(`
+            <div style="font-size:12px;line-height:1.6">
+                <b>الموظف:</b> ${st.userName || 'موظف'}<br>
+                <b>الدقة التقريبية:</b> ~${st.accuracy || 0} متر<br>
+                <b>آخر تحديث:</b> ${timeStr || '-'}<br>
+                <b>الإحداثيات:</b> <span dir="ltr">${st.lat}, ${st.lng}</span>
+            </div>
+        `);
+        bounds.push([st.lat, st.lng]);
+    });
 </script>
 </body>
 </html>
