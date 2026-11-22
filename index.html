@@ -4380,51 +4380,106 @@ function captureStaffGpsLocation(silent = false) {
         return;
     }
 
-    if (statusEl) statusEl.textContent = "جاري طلب إذن الموقع والتقاط الإحداثيات...";
+    if (statusEl) statusEl.textContent = "جاري تحسين دقة GPS والتقاط أفضل قراءة...";
 
-    navigator.geolocation.getCurrentPosition(
-        async (pos) => {
+    let bestReading = null;
+    let settled = false;
+    let watchId = null;
+    let maxWaitTimer = null;
+
+    const cleanupGeoWatch = () => {
+        if (watchId !== null && navigator.geolocation.clearWatch) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        if (maxWaitTimer) {
+            clearTimeout(maxWaitTimer);
+            maxWaitTimer = null;
+        }
+    };
+
+    const finalizeReading = async () => {
+        if (settled) return;
+        settled = true;
+        cleanupGeoWatch();
+
+        if (!bestReading) {
+            if (statusEl) statusEl.textContent = "تعذر الحصول على قراءة دقيقة للموقع.";
+            if (!silent) alert("تعذر الحصول على قراءة دقيقة للموقع.");
+            return;
+        }
+
+        const { lat, lng, accuracy } = bestReading;
+        const actorName = (currentUser?.name || currentUser?.username || 'موظف').trim();
+        const actorKey = nw(actorName) || 'staff_default';
+
+        const gpsRecord = {
+            userName: actorName,
+            lat,
+            lng,
+            accuracy,
+            updatedAt: new Date().toISOString()
+        };
+
+        lastStaffGpsData = gpsRecord;
+        staffLiveLocations[actorKey] = gpsRecord;
+
+        const accLabel = accuracy <= 30
+            ? 'دقة عالية'
+            : (accuracy <= 150 ? 'دقة متوسطة' : 'دقة منخفضة / عبر الشبكة');
+
+        if (statusEl) {
+            statusEl.innerHTML = `تم تحديد الموقع — <span class="font-mono font-bold text-emerald-700" dir="ltr">${lat}, ${lng}</span> (${accLabel}: ~${accuracy} م)`;
+        }
+
+        if (el('mapHallCoordsInput') && currentUser?.isAdmin) {
+            el('mapHallCoordsInput').value = `${lat}, ${lng}`;
+        }
+
+        await saveToIndexedDB(getFullDatabasePayload(false));
+        if (!currentUser?.isAdmin) {
+            await syncToExternalCloud(true, true, true);
+        } else {
+            saveAppState(true);
+        }
+
+        if (activeTab === 'hallsmap' && currentUser?.isAdmin) {
+            renderAdminHallsMap();
+        }
+
+        if (!silent) {
+            showPasteToast("تم التقاط الموقع ومزامنته 📍", `${accLabel} (~${accuracy} م)`);
+        }
+    };
+
+    maxWaitTimer = setTimeout(() => {
+        finalizeReading();
+    }, 8000);
+
+    watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            if (settled) return;
             const lat = Number(pos.coords.latitude.toFixed(6));
             const lng = Number(pos.coords.longitude.toFixed(6));
-            const acc = Math.round(pos.coords.accuracy || 0);
-            const actorName = (currentUser?.name || currentUser?.username || 'موظف').trim();
-            const actorKey = nw(actorName) || 'staff_default';
+            const acc = Math.max(1, Math.round(pos.coords.accuracy || 9999));
 
-            const gpsRecord = {
-                userName: actorName,
-                lat,
-                lng,
-                accuracy: acc,
-                updatedAt: new Date().toISOString()
-            };
-
-            lastStaffGpsData = gpsRecord;
-            staffLiveLocations[actorKey] = gpsRecord;
+            if (!bestReading || acc < bestReading.accuracy) {
+                bestReading = { lat, lng, accuracy: acc };
+            }
 
             if (statusEl) {
-                statusEl.innerHTML = `تم تحديد الموقع بنجاح — <span class="font-mono font-bold text-emerald-700" dir="ltr">${lat}, ${lng}</span> (دقة ~${acc} م)`;
+                statusEl.textContent = `جاري تحسين القراءة... أفضل دقة حتى الآن: ~${bestReading.accuracy} م`;
             }
 
-            if (el('mapHallCoordsInput') && currentUser?.isAdmin) {
-                el('mapHallCoordsInput').value = `${lat}, ${lng}`;
-            }
-
-            await saveToIndexedDB(getFullDatabasePayload(false));
-            if (!currentUser?.isAdmin) {
-                await syncToExternalCloud(true, true, true);
-            } else {
-                saveAppState(true);
-            }
-
-            if (activeTab === 'hallsmap' && currentUser?.isAdmin) {
-                renderAdminHallsMap();
-            }
-
-            if (!silent) {
-                showPasteToast("تم التقاط الموقع ومزامنته 📍", `الإحداثيات: ${lat}, ${lng} (دقة ~${acc} م)`);
+            if (bestReading.accuracy <= 25) {
+                finalizeReading();
             }
         },
         (err) => {
+            if (settled) return;
+            settled = true;
+            cleanupGeoWatch();
+
             let msg = "تعذر تحديد الموقع حالياً.";
             if (err.code === 1) msg = "تم رفض إذن الموقع — فعّل إذن الموقع من إعدادات المتصفح.";
             else if (err.code === 2) msg = "تعذر الوصول إلى إشارة الموقع — تأكد من تشغيل GPS/الموقع.";
