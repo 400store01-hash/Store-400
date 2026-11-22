@@ -4161,9 +4161,35 @@ function renderAdminHallsMap() {
 
     if (!adminLeafletMap) {
         adminLeafletMap = L.map('adminHallsMapContainer').setView([35.5317, 35.7901], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
             attribution: '© OpenStreetMap'
-        }).addTo(adminLeafletMap);
+        });
+
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: '© Esri World Imagery'
+        });
+
+        const cleanStreetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '© CartoDB'
+        });
+
+        // الطبقة الافتراضية (يمكنك تبديلها إلى satelliteLayer لتبدأ بالأقمار الصناعية)
+        osmLayer.addTo(adminLeafletMap);
+
+        L.control.layers(
+            {
+                "خريطة الشوارع (OSM)": osmLayer,
+                "أقمار صناعية (Esri)": satelliteLayer,
+                "خريطة هادئة (Carto)": cleanStreetLayer
+            },
+            null,
+            { position: 'topleft', collapsed: false }
+        ).addTo(adminLeafletMap);
+
         adminMapMarkersLayer = L.layerGroup().addTo(adminLeafletMap);
 
         adminLeafletMap.on('click', (e) => {
