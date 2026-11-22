@@ -17,6 +17,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg-page:#f5f7fb;--bg-card:#ffffff;--bg-subtle:#f8fafc;--border:#e5eaf2;
@@ -491,6 +493,10 @@ body.no-perm-swaps .perm-swaps{display:none!important}
           <!-- تبويب الطلبات المستقل للمدير فقط -->
           <button type="button" onclick="switchTab('requests')" id="btn-requests" class="nav-tab perm-admin-only"><i class="fa-solid fa-inbox text-amber-600"></i><span>الطلبات</span><span id="managerRequestsBadge" class="hidden bg-amber-500 text-white px-1.5 rounded-full text-[10px] font-black">0</span></button>
           <button type="button" onclick="switchTab('analytics')" id="btn-analytics" class="nav-tab perm-analytics"><i class="fa-solid fa-chart-pie"></i><span data-label-id="lbl_tab_analytics" class="editable-label">التحليلات</span></button>
+          <button type="button" onclick="switchTab('hallsmap')" id="btn-hallsmap" class="nav-tab perm-admin-only">
+  <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
+  <span>خريطة الصالات</span>
+</button>
           <button type="button" onclick="switchTab('sheet5')" id="btn-sheet5" class="nav-tab perm-settings"><i class="fa-solid fa-gear"></i><span data-label-id="lbl_tab_6" class="editable-label">الإعدادات</span></button>
         </nav>
 
@@ -937,7 +943,51 @@ body.no-perm-swaps .perm-swaps{display:none!important}
           </div>
         </div>
       </div>
+<!-- ================= تبويب خريطة الصالات (خاص بالمدير فقط) ================= -->
+<div id="tab-hallsmap" class="tab-panel hidden perm-admin-only no-print space-y-4">
+  <div class="erp-card p-4 flex flex-wrap justify-between items-center gap-3">
+    <div>
+      <h3 class="font-black text-base text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
+        <span>خريطة مواقع الصالات وسجلاتها (خاص بالمدير)</span>
+      </h3>
+      <p class="text-[11px] text-slate-500 mt-0.5">اضغط على أي صالة على الخريطة لعرض سجل طلبياتها، أو انقر على الخريطة لإضافة موقع صالة جديدة</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <input type="text" id="mapHallNameInput" list="hallsHistoryList" placeholder="اسم الصالة (مثال: صالة المزة)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold outline-none w-44">
+      <input type="text" id="mapHallCoordsInput" dir="ltr" placeholder="الإحداثيات: 35.5317, 35.7901" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono outline-none w-48">
+      <button type="button" onclick="saveHallMapLocation()" class="btn-primary !bg-emerald-600 !border-emerald-700"><i class="fa-solid fa-location-dot"></i> تثبيت الصالة</button>
+    </div>
+  </div>
 
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <!-- الخريطة التفاعلية -->
+    <div class="lg:col-span-7 erp-card overflow-hidden p-2">
+      <div id="adminHallsMapContainer" class="w-full h-[470px] rounded-xl z-10"></div>
+    </div>
+
+    <!-- السجل الخاص بالصالة المختارة -->
+    <div class="lg:col-span-5 erp-card p-4 space-y-3 min-h-[486px] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+        <div>
+          <h4 id="selectedMapHallTitle" class="font-black text-sm text-slate-900">اختر صالة من الخريطة</h4>
+          <p id="selectedMapHallSub" class="text-[11px] text-slate-500">ستظهر هنا جميع طلبيات الصالة وإحصائياتها</p>
+        </div>
+        <button type="button" id="btnDeleteSelectedHallPin" onclick="deleteSelectedHallLocation()" class="hidden btn-soft !text-rose-600 !py-1 !text-[11px]"><i class="fa-solid fa-trash-can"></i> حذف الموقع</button>
+      </div>
+
+      <div id="selectedMapHallKpis" class="hidden grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">الطلبيات: <b id="mapHallOrdersCnt">0</b></div>
+        <div class="bg-indigo-50 p-2 rounded-xl border border-indigo-200 text-indigo-800">المسحوب: <b id="mapHallScnSum">0</b></div>
+        <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-emerald-800">الدقة: <b id="mapHallAccAvg">0%</b></div>
+      </div>
+
+      <div id="selectedMapHallRecordsList" class="flex-1 overflow-y-auto space-y-2 max-h-[340px]">
+        <div class="text-center py-16 text-xs font-bold text-slate-400">انقر على أي علامة صالة في الخريطة لعرض سجلها الكامل</div>
+      </div>
+    </div>
+  </div>
+</div>
       <!-- ================= التبويب 8: الإعدادات المرتبة بتبويبات داخلية ================= -->
       <div id="tab-sheet5" class="tab-panel hidden perm-settings no-print max-w-5xl mx-auto space-y-4">
 
@@ -4054,6 +4104,150 @@ initApp = async function () {
     await _origInitAppForAutoSync();
     startPeriodicCloudAutoSync();
 };
+  // ================= 22. خريطة مواقع الصالات وسجلاتها (للمدير فقط) =================
+let hallLocationsList = []; // [{ id, hallName, lat, lng }]
+let adminLeafletMap = null;
+let adminMapMarkersLayer = null;
+let selectedMapHallId = null;
+
+// دمج المواقع مع الحفظ والاستعادة السحابية تلقائياً
+const _origGetPayloadMap = getFullDatabasePayload;
+getFullDatabasePayload = function(lightStaffMode = false) {
+    const payload = _origGetPayloadMap(lightStaffMode);
+    if (!lightStaffMode) payload.hallLocationsList = hallLocationsList;
+    return payload;
+};
+
+const _origApplyPayloadMap = applyImportedDatabasePayload;
+applyImportedDatabasePayload = async function(data, isSilentCloud = false) {
+    if (data && Array.isArray(data.hallLocationsList)) hallLocationsList = data.hallLocationsList;
+    await _origApplyPayloadMap(data, isSilentCloud);
+    if (activeTab === 'hallsmap') renderAdminHallsMap();
+};
+
+const _origInitAppMap = initApp;
+initApp = async function() {
+    await _origInitAppMap();
+    const svd = await loadFromIndexedDB();
+    if (svd && Array.isArray(svd.hallLocationsList)) hallLocationsList = svd.hallLocationsList;
+};
+
+const _origSwitchTabMap = switchTab;
+switchTab = function(t) {
+    if (t === 'hallsmap' && !currentUser?.isAdmin) return;
+    _origSwitchTabMap(t);
+    if (t === 'hallsmap') setTimeout(() => renderAdminHallsMap(), 80);
+};
+
+function renderAdminHallsMap() {
+    if (!currentUser?.isAdmin || typeof L === 'undefined') return;
+    const box = el('adminHallsMapContainer');
+    if (!box) return;
+
+    if (!adminLeafletMap) {
+        // التمركز الافتراضي (اللاذقية / سوريا — يمكنك تغييره لأي إحداثيات)
+        adminLeafletMap = L.map('adminHallsMapContainer').setView([35.5317, 35.7901], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(adminLeafletMap);
+        adminMapMarkersLayer = L.layerGroup().addTo(adminLeafletMap);
+
+        // عند النقر على الخريطة: تعبئة الإحداثيات تلقائياً لتسهيل إضافة صالة
+        adminLeafletMap.on('click', (e) => {
+            const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
+            if (el('mapHallCoordsInput')) el('mapHallCoordsInput').value = `${lat}, ${lng}`;
+            showPasteToast("تم التقاط الإحداثيات 📍", "اكتب اسم الصالة واضغط (تثبيت الصالة)");
+        });
+    }
+
+    adminLeafletMap.invalidateSize();
+    adminMapMarkersLayer.clearLayers();
+
+    const bounds = [];
+    hallLocationsList.forEach(loc => {
+        const hallRecords = archiveList.filter(a => nw(a.hallName) === nw(loc.hallName));
+        const marker = L.marker([loc.lat, loc.lng]).addTo(adminMapMarkersLayer);
+        marker.bindTooltip(`<b>${loc.hallName}</b> (${hallRecords.length} طلبية)`, { direction: 'top' });
+        marker.on('click', () => openHallRecordFromMap(loc.id));
+        bounds.push([loc.lat, loc.lng]);
+    });
+
+    if (bounds.length > 0) adminLeafletMap.fitBounds(bounds, { padding: [45, 45], maxZoom: 14 });
+}
+
+function saveHallMapLocation() {
+    if (!currentUser?.isAdmin) return;
+    const name = (el('mapHallNameInput')?.value || '').trim();
+    const coordsRaw = (el('mapHallCoordsInput')?.value || '').trim();
+    if (!name || !coordsRaw) { alert("أدخل اسم الصالة والإحداثيات (أو انقر على موقعها في الخريطة)!"); return; }
+
+    const parts = coordsRaw.split(/[,،\s]+/).map(Number).filter(n => !isNaN(n));
+    if (parts.length < 2) { alert("صيغة الإحداثيات غير صحيحة! مثال: 35.5317, 35.7901"); return; }
+
+    const existingIdx = hallLocationsList.findIndex(h => nw(h.hallName) === nw(name));
+    if (existingIdx !== -1) {
+        hallLocationsList[existingIdx].lat = parts[0];
+        hallLocationsList[existingIdx].lng = parts[1];
+    } else {
+        hallLocationsList.push({ id: 'LOC_' + Date.now(), hallName: name, lat: parts[0], lng: parts[1] });
+    }
+
+    if (el('mapHallNameInput')) el('mapHallNameInput').value = '';
+    if (el('mapHallCoordsInput')) el('mapHallCoordsInput').value = '';
+    renderAdminHallsMap();
+    saveAppState(true);
+    showPasteToast("تم تثبيت موقع الصالة 📍✓", `حُفظ موقع (${name}) في الخريطة والسحابة`);
+}
+
+function openHallRecordFromMap(locId) {
+    const loc = hallLocationsList.find(x => x.id === locId);
+    if (!loc) return;
+    selectedMapHallId = locId;
+
+    const records = archiveList.filter(a => nw(a.hallName) === nw(loc.hallName));
+    let totalScn = 0, accSum = 0;
+    records.forEach(r => { totalScn += (r.kpis?.tSP || 0); accSum += (r.kpis?.mP || 0); });
+    const avgAcc = records.length > 0 ? Math.round(accSum / records.length) : 0;
+
+    if (el('selectedMapHallTitle')) el('selectedMapHallTitle').textContent = `سجل: ${loc.hallName}`;
+    if (el('selectedMapHallSub')) el('selectedMapHallSub').textContent = `الإحداثيات: ${loc.lat}, ${loc.lng}`;
+    el('btnDeleteSelectedHallPin')?.classList.remove('hidden');
+    el('selectedMapHallKpis')?.classList.remove('hidden');
+    if (el('mapHallOrdersCnt')) el('mapHallOrdersCnt').textContent = records.length;
+    if (el('mapHallScnSum')) el('mapHallScnSum').textContent = totalScn;
+    if (el('mapHallAccAvg')) el('mapHallAccAvg').textContent = `${avgAcc}%`;
+
+    const listBox = el('selectedMapHallRecordsList');
+    if (!listBox) return;
+    if (records.length === 0) {
+        listBox.innerHTML = `<div class="text-center py-10 text-xs font-bold text-slate-400">لا توجد طلبيات مؤرشفة باسم (${loc.hallName}) بعد</div>`;
+        return;
+    }
+
+    listBox.innerHTML = records.map(r => `
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center gap-2 text-xs">
+            <div>
+                <div class="font-black text-slate-900">الأسبوع (${r.weekNum}) <span class="font-mono text-slate-400 font-normal mr-1" dir="ltr">${r.date}</span></div>
+                <div class="text-[11px] text-slate-600 mt-0.5">مطلوب: <b>${r.kpis?.tRP || 0}</b> | مسحوب: <b class="text-indigo-600">${r.kpis?.tSP || 0}</b> | دقة: <b class="text-emerald-600">${r.kpis?.mP ?? '-'}%</b></div>
+            </div>
+            <button type="button" onclick="jumpToArchivedReportFromAnalytics('${escAttr(r.id)}')" class="btn-primary !py-1 !text-[11px]">فتح التقرير</button>
+        </div>
+    `).join('');
+}
+
+function deleteSelectedHallLocation() {
+    if (!currentUser?.isAdmin || !selectedMapHallId) return;
+    if (!confirm("إزالة علامة هذه الصالة من الخريطة؟")) return;
+    hallLocationsList = hallLocationsList.filter(x => x.id !== selectedMapHallId);
+    selectedMapHallId = null;
+    el('btnDeleteSelectedHallPin')?.classList.add('hidden');
+    el('selectedMapHallKpis')?.classList.add('hidden');
+    if (el('selectedMapHallTitle')) el('selectedMapHallTitle').textContent = 'اختر صالة من الخريطة';
+    if (el('selectedMapHallSub')) el('selectedMapHallSub').textContent = 'ستظهر هنا جميع طلبيات الصالة وإحصائياتها';
+    if (el('selectedMapHallRecordsList')) el('selectedMapHallRecordsList').innerHTML = '';
+    renderAdminHallsMap();
+    saveAppState(true);
+}
 </script>
 </body>
 </html>
