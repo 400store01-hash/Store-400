@@ -945,6 +945,20 @@ body.no-perm-swaps .perm-swaps{display:none!important}
       </div>
 <!-- ================= تبويب خريطة الصالات (خاص بالمدير فقط) ================= -->
 <div id="tab-hallsmap" class="tab-panel hidden perm-admin-only no-print space-y-4">
+  <!-- صندوق تجربة GPS مؤقت (يمكن حذفه بالكامل بعد التجربة) -->
+<div id="gpsTestBox" class="erp-card p-3 flex flex-wrap items-center justify-between gap-2 bg-amber-50/60 border-amber-200">
+  <div class="text-xs space-y-0.5">
+    <div class="font-black text-slate-900 flex items-center gap-1.5">
+      <i class="fa-solid fa-satellite-dish text-amber-600"></i>
+      <span>تجربة تحديد الموقع الجغرافي (GPS)</span>
+    </div>
+    <div id="gpsTestResult" class="text-[11px] text-slate-600 font-mono" dir="ltr">Ready for GPS test...</div>
+  </div>
+  <button type="button" onclick="runGpsTestOnMap()" class="btn-primary !bg-amber-600 !border-amber-700">
+    <i class="fa-solid fa-location-crosshairs"></i>
+    <span>اختبار موقعي الآن</span>
+  </button>
+</div>
   <div class="erp-card p-4 flex flex-wrap justify-between items-center gap-3">
     <div>
       <h3 class="font-black text-base text-slate-900 flex items-center gap-2">
@@ -4292,6 +4306,57 @@ async function searchMapAreaByName() {
     } catch (err) {
         alert("تعذر إتمام البحث حالياً. تأكد من توفر الاتصال بالإنترنت.");
     }
+}
+  // ================= تجربة GPS مؤقتة (يمكن حذفها بالكامل لاحقاً) =================
+let gpsUserMarker = null;
+
+function runGpsTestOnMap() {
+    const out = el('gpsTestResult');
+    if (!navigator.geolocation) {
+        if (out) out.textContent = "Geolocation is not supported on this browser.";
+        alert("المتصفح لا يدعم خدمة تحديد الموقع الجغرافي.");
+        return;
+    }
+
+    if (out) out.textContent = "Requesting GPS permission & coordinates...";
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = Number(pos.coords.latitude.toFixed(6));
+            const lng = Number(pos.coords.longitude.toFixed(6));
+            const acc = Math.round(pos.coords.accuracy || 0);
+
+            if (out) {
+                out.textContent = `Lat: ${lat}, Lng: ${lng} | Accuracy: ~${acc}m`;
+            }
+            if (el('mapHallCoordsInput')) {
+                el('mapHallCoordsInput').value = `${lat}, ${lng}`;
+            }
+
+            if (adminLeafletMap) {
+                adminLeafletMap.setView([lat, lng], 16);
+                if (gpsUserMarker) adminLeafletMap.removeLayer(gpsUserMarker);
+                gpsUserMarker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    color: '#d97706',
+                    fillColor: '#f59e0b',
+                    fillOpacity: 0.55,
+                    weight: 2
+                }).addTo(adminLeafletMap).bindPopup(`<b>موقعك الحالي (GPS)</b><br>دقة تقريبية: ${acc} متر`).openPopup();
+            }
+
+            showPasteToast("تم التقاط موقع GPS 📍", `الدقة التقريبية: ${acc} متر`);
+        },
+        (err) => {
+            const msg = err.code === 1
+                ? "تم رفض إذن الوصول للموقع من المتصفح."
+                : err.code === 2
+                    ? "تعذر تحديد الموقع حالياً (تأكد من تفعيل GPS/الموقع)."
+                    : "انتهت مهلة طلب الموقع.";
+            if (out) out.textContent = `GPS Error (${err.code}): ${msg}`;
+            alert(msg);
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
 }
 </script>
 </body>
