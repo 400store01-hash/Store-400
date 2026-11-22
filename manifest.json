@@ -1,0 +1,23 @@
+{
+  "name": "منظومة تشييك ومطابقة البالم — 400",
+  "short_name": "منظومة البالم",
+  "start_url": "/Store-400/",
+  "scope": "/Store-400/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#4f46e5",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
