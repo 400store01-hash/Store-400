@@ -954,6 +954,12 @@ body.no-perm-swaps .perm-swaps{display:none!important}
       <p class="text-[11px] text-slate-500 mt-0.5">اضغط على أي صالة على الخريطة لعرض سجل طلبياتها، أو انقر على الخريطة لإضافة موقع صالة جديدة</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+        <input type="text" id="mapAreaSearchInput" onkeydown="if(event.key==='Enter'){event.preventDefault();searchMapAreaByName();}" placeholder="ابحث باسم المنطقة أو الحي..." class="bg-transparent px-3 py-1.5 text-xs outline-none w-48">
+        <button type="button" onclick="searchMapAreaByName()" class="px-2.5 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition" title="بحث عن المنطقة">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
       <input type="text" id="mapHallNameInput" list="hallsHistoryList" placeholder="اسم الصالة (مثال: صالة المزة)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold outline-none w-44">
       <input type="text" id="mapHallCoordsInput" dir="ltr" placeholder="الإحداثيات: 35.5317, 35.7901" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono outline-none w-48">
       <button type="button" onclick="saveHallMapLocation()" class="btn-primary !bg-emerald-600 !border-emerald-700"><i class="fa-solid fa-location-dot"></i> تثبيت الصالة</button>
@@ -4247,6 +4253,45 @@ function deleteSelectedHallLocation() {
     if (el('selectedMapHallRecordsList')) el('selectedMapHallRecordsList').innerHTML = '';
     renderAdminHallsMap();
     saveAppState(true);
+}
+  let mapSearchMarker = null;
+
+async function searchMapAreaByName() {
+    if (!currentUser?.isAdmin || !adminLeafletMap) return;
+    const q = (el('mapAreaSearchInput')?.value || '').trim();
+    if (!q) { alert("اكتب اسم المنطقة أو الحي أولاً للبحث عنه."); return; }
+
+    showPasteToast("جاري البحث عن المنطقة 🔍", q);
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ar&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const results = await res.json();
+
+        if (!Array.isArray(results) || results.length === 0) {
+            alert("لم يتم العثور على نتائج مطابقة لاسم المنطقة. جرّب كتابة اسم أوضح أو إضافة اسم المدينة.");
+            return;
+        }
+
+        const lat = parseFloat(results[0].lat);
+        const lng = parseFloat(results[0].lon);
+        adminLeafletMap.setView([lat, lng], 15);
+
+        if (mapSearchMarker) adminLeafletMap.removeLayer(mapSearchMarker);
+        mapSearchMarker = L.circleMarker([lat, lng], {
+            radius: 10,
+            color: '#4f46e5',
+            fillColor: '#6366f1',
+            fillOpacity: 0.45,
+            weight: 2
+        }).addTo(adminLeafletMap).bindPopup(`<b>${results[0].display_name}</b>`).openPopup();
+
+        if (el('mapHallCoordsInput')) {
+            el('mapHallCoordsInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+        showPasteToast("تم تحديد المنطقة 📍", "اكتب اسم الصالة واضغط (تثبيت الصالة)");
+    } catch (err) {
+        alert("تعذر إتمام البحث حالياً. تأكد من توفر الاتصال بالإنترنت.");
+    }
 }
 </script>
 </body>
