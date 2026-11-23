@@ -3208,30 +3208,81 @@ async function confirmSaveToArchive(forceNewCopy = false) {
     const hall = el('archHallName').value.trim(), wk = el('archWeekNum').value.trim(), dt = el('archDateInput').value.trim(), nt = el('archNotesInput').value.trim();
     if (!hall || !wk) { alert("أدخل اسم الصالة ورقم الأسبوع!"); return; }
 
-    const isAdmin = Boolean(currentUser?.isAdmin);
-    showPasteToast("جاري الحفظ السريع بالسحابة ⏳", "يرجى الانتظار لحظات...");
+    const btn = el('btnConfirmArchivePrimary');
+    if (btn) btn.disabled = true;
 
-    const localOrderCopy = JSON.parse(JSON.stringify(orderData));
-    const localPalmCopy = JSON.parse(JSON.stringify(palmData));
-    const localSwapCopy = JSON.parse(JSON.stringify(currentSessionSwapLog));
-    const localKpisCopy = lastCalculatedSummary?.kpis || {};
-    const editTargetId = (!forceNewCopy && activeEditingArchiveId) ? activeEditingArchiveId : null;
+    try {
+        const isAdmin = Boolean(currentUser?.isAdmin);
+        showPasteToast("جاري الحفظ السريع بالسحابة ⏳", "يرجى الانتظار لحظات...");
 
-    await restoreFromExternalCloud(true);
+        const localOrderCopy = JSON.parse(JSON.stringify(orderData));
+        const localPalmCopy = JSON.parse(JSON.stringify(palmData));
+        const localSwapCopy = JSON.parse(JSON.stringify(currentSessionSwapLog));
+        const localKpisCopy = lastCalculatedSummary?.kpis || {};
+        const editTargetId = (!forceNewCopy && activeEditingArchiveId) ? activeEditingArchiveId : null;
 
-    const existingIdx = editTargetId ? archiveList.findIndex(x => x.id === editTargetId) : -1;
-    const payload = {
-        hallName: hall, weekNum: wk, date: dt || getTodayFormatted(), notes: nt,
-        orderData: localOrderCopy,
-        palmData: localPalmCopy,
-        swapLog: localSwapCopy,
-        kpis: localKpisCopy,
-        createdBy: (existingIdx !== -1 && archiveList[existingIdx].createdBy) ? archiveList[existingIdx].createdBy : (currentUser?.name || 'غير محدد'),
-        lastEditedBy: currentUser?.name || 'غير محدد',
-        approvalStatus: isAdmin ? 'APPROVED' : 'PENDING',
-        approvedBy: isAdmin ? (currentUser?.name || 'المدير') : '',
-        restoreApprovedForUser: ''
-    };
+        // مهلة قصوى 6 ثوانٍ للسحب السحابي حتى لا تتجمد النافذة أبداً
+        try {
+            await Promise.race([
+                restoreFromExternalCloud(true),
+                new Promise(res => setTimeout(res, 6000))
+            ]);
+        } catch (e) {}
+
+        const existingIdx = editTargetId ? archiveList.findIndex(x => x.id === editTargetId) : -1;
+        const payload = {
+            hallName: hall, weekNum: wk, date: dt || getTodayFormatted(), notes: nt,
+            orderData: localOrderCopy,
+            palmData: localPalmCopy,
+            swapLog: localSwapCopy,
+            kpis: localKpisCopy,
+            createdBy: (existingIdx !== -1 && archiveList[existingIdx].createdBy) ? archiveList[existingIdx].createdBy : (currentUser?.name || 'غير محدد'),
+            lastEditedBy: currentUser?.name || 'غير محدد',
+            approvalStatus: isAdmin ? 'APPROVED' : 'PENDING',
+            approvedBy: isAdmin ? (currentUser?.name || 'المدير') : '',
+            restoreApprovedForUser: ''
+        };
+
+        if (existingIdx !== -1) {
+            const oldArch = archiveList[existingIdx];
+            const auditList = Array.isArray(oldArch.editAuditLog) ? [...oldArch.editAuditLog] : [];
+            const nowFullTime = `${getTodayFormatted()} — ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+            if (!isAdmin && typeof buildArchiveEditDiffSummary === 'function') {
+                auditList.push({
+                    editedBy: currentUser?.name || 'موظف',
+                    editedAt: nowFullTime,
+                    details: buildArchiveEditDiffSummary(oldArch, localOrderCopy, localPalmCopy, localSwapCopy)
+                });
+                payload.editAuditLog = auditList;
+            }
+
+            archiveList[existingIdx] = { ...archiveList[existingIdx], ...payload };
+        } else {
+            archiveList.unshift({ id: 'ARCH_' + Date.now(), ...payload });
+        }
+
+        activeEditingArchiveId = null; currentSessionSwapLog = [];
+        selectedArchiveWeekFilter = String(wk); openWeekKeys.add(String(wk));
+        clearAllSelections(); orderData = []; palmData = [];
+
+        // إغلاق النافذة وتحديث الواجهة فوراً
+        closeSaveArchiveModal();
+        populateArchiveDatalistsAndDropdown();
+        updateEditingArchiveBannerUI();
+        updateSessionSwapBadgeUI();
+        updatePendingApprovalsUI();
+        recalculateAndRender(false);
+
+        await saveToIndexedDB(getFullDatabasePayload(false));
+        await syncToExternalCloud(false, true, !isAdmin);
+    } catch (err) {
+        console.error(err);
+        alert("حدث خطأ أثناء الحفظ: " + (err?.message || err));
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
 
     if (existingIdx !== -1) {
         const oldArch = archiveList[existingIdx];
