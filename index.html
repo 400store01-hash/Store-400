@@ -432,7 +432,16 @@ body.no-perm-swaps .perm-swaps{display:none!important}
     </div>
   </div>
 </div>
-
+<!-- 9. نافذة معاينة تقرير الأرشيف وسجل التعديلات والاعتماد -->
+<div id="archivePreviewModal" onclick="if(event.target===this)hide('archivePreviewModal')" class="modal-backdrop fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 no-print">
+  <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full overflow-hidden max-h-[90vh] flex flex-col">
+    <div id="archivePreviewModalHeader" class="px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2 shrink-0"></div>
+    <div id="archivePreviewModalBody" class="p-5 overflow-y-auto flex-1 text-right"></div>
+    <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
+      <button type="button" onclick="hide('archivePreviewModal')" class="btn-soft">إغلاق</button>
+    </div>
+  </div>
+</div>
 <!-- إشعار عائم -->
 <div id="pasteToast" style="display:none" class="fixed bottom-5 left-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl border border-slate-700 items-center gap-3 no-print">
   <i class="fa-solid fa-circle-check text-lg text-emerald-400"></i>
@@ -3617,6 +3626,12 @@ function renderArchiveView() {
 
             let actionBtns = `<button type="button" onclick="previewArchiveReport('${escAttr(a.id)}')" class="btn-soft">معاينة</button>`;
             if (isAdmin) {
+                if (st !== 'APPROVED') {
+                    actionBtns += `<button type="button" onclick="decideOrderApproval('${escAttr(a.id)}', true)" class="btn-soft !bg-emerald-50 !text-emerald-700 !border-emerald-200"><i class="fa-solid fa-check"></i> معتمدة</button>`;
+                }
+                if (st !== 'REJECTED') {
+                    actionBtns += `<button type="button" onclick="decideOrderApproval('${escAttr(a.id)}', false)" class="btn-soft !bg-rose-50 !text-rose-700 !border-rose-200"><i class="fa-solid fa-xmark"></i> غير معتمدة</button>`;
+                }
                 actionBtns += `<button type="button" onclick="restoreArchiveToCurrent('${escAttr(a.id)}')" class="btn-primary">استرجاع وتعديل</button>`;
                 actionBtns += `<button type="button" onclick="deleteArchiveItem('${escAttr(a.id)}')" class="btn-soft !text-rose-600"><i class="fa-solid fa-trash-can"></i></button>`;
             } else if (canStaffRestoreNow) {
@@ -3646,21 +3661,34 @@ function renderArchiveView() {
 }
 
 function previewArchiveReport(id) {
-    const a = archiveList.find(x => x.id === id), viewer = el('archiveReportViewer'); if (!a || !viewer) return;
-    selectedArchiveId = id; const comp = computeMatchingEngine(a.orderData || [], a.palmData || []), k = comp.kpis;
+    const a = archiveList.find(x => x.id === id);
+    const modalHeader = el('archivePreviewModalHeader');
+    const modalBody = el('archivePreviewModalBody');
+    if (!a || !modalHeader || !modalBody) return;
+
+    selectedArchiveId = id;
+    const comp = computeMatchingEngine(a.orderData || [], a.palmData || []), k = comp.kpis;
     const isAdmin = Boolean(currentUser?.isAdmin);
     const swaps = Array.isArray(a.swapLog) ? a.swapLog : [];
-
-    const swapsBoxHtml = (isAdmin && swaps.length > 0) ? `
-        <div class="mb-4 bg-teal-50/60 border border-teal-300 rounded-xl p-3.5 space-y-2">
-            <h4 class="font-black text-xs text-teal-900"><i class="fa-solid fa-shuffle ml-1"></i> سجل الاستبدالات والإجراءات المتخذة (${swaps.length} حركة):</h4>
-            <table class="pro-table w-full bg-white rounded-lg overflow-hidden border border-teal-200">
-                <thead><tr><th class="w-16 text-center">الوقت</th><th class="w-24">المنفّذ</th><th>كود الطلبية</th><th>الكود البديل</th><th class="w-14 text-center">العدد</th><th>نوع وسبب الإجراء</th></tr></thead>
-                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10.5px]">${s.time || '-'}</td><td class="font-bold">${s.user || '-'}</td><td class="font-mono font-bold text-rose-700">${s.orderCode}</td><td class="font-mono font-bold text-indigo-700">${s.scannedCode}</td><td class="text-center font-black">${s.qty}</td><td class="text-[11px] font-semibold text-teal-800">${s.type}: ${s.reason}</td></tr>`).join('')}</tbody>
-            </table>
-        </div>` : '';
-
     const auditLog = Array.isArray(a.editAuditLog) ? a.editAuditLog : [];
+    const st = a.approvalStatus || 'APPROVED';
+
+    const adminDecisionBtns = isAdmin ? `
+        <button type="button" onclick="decideOrderApproval('${escAttr(a.id)}', true); hide('archivePreviewModal');" class="btn-primary !bg-emerald-600 !border-emerald-700"><i class="fa-solid fa-check"></i> معتمدة</button>
+        <button type="button" onclick="decideOrderApproval('${escAttr(a.id)}', false); hide('archivePreviewModal');" class="btn-primary !bg-rose-600 !border-rose-700"><i class="fa-solid fa-xmark"></i> غير معتمدة</button>
+    ` : '';
+
+    modalHeader.innerHTML = `
+        <div>
+            <h4 class="font-black text-base text-slate-900">معاينة: ${a.hallName} — الأسبوع (${a.weekNum})</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">${a.date} • أنشأ الطلب: <b>${a.createdBy || 'غير محدد'}</b> • الحالة: <b>${st === 'PENDING' ? 'بانتظار الاعتماد' : (st === 'REJECTED' ? 'غير معتمد ✕' : 'معتمد ✓')}</b></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            ${adminDecisionBtns}
+            <button type="button" onclick="hide('archivePreviewModal')" class="text-slate-400 hover:text-slate-700 text-xl px-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    `;
+
     const editAuditHtml = (isAdmin && auditLog.length > 0) ? `
         <div class="mb-4 bg-amber-50/70 border border-amber-300 rounded-xl p-3.5 space-y-2">
             <h4 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${auditLog.length}):</h4>
@@ -3679,12 +3707,39 @@ function previewArchiveReport(id) {
             </div>
         </div>` : '';
 
+    const swapsBoxHtml = (isAdmin && swaps.length > 0) ? `
+        <div class="mb-4 bg-teal-50/60 border border-teal-300 rounded-xl p-3.5 space-y-2">
+            <h4 class="font-black text-xs text-teal-900"><i class="fa-solid fa-shuffle ml-1"></i> سجل الاستبدالات والإجراءات المتخذة (${swaps.length} حركة):</h4>
+            <table class="pro-table w-full bg-white rounded-lg overflow-hidden border border-teal-200">
+                <thead><tr><th class="w-16 text-center">الوقت</th><th class="w-24">المنفّذ</th><th>كود الطلبية</th><th>الكود البديل</th><th class="w-14 text-center">العدد</th><th>نوع وسبب الإجراء</th></tr></thead>
+                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10.5px]">${s.time || '-'}</td><td class="font-bold">${s.user || '-'}</td><td class="font-mono font-bold text-rose-700">${s.orderCode}</td><td class="font-mono font-bold text-indigo-700">${s.scannedCode}</td><td class="text-center font-black">${s.qty}</td><td class="text-[11px] font-semibold text-teal-800">${s.type}: ${s.reason}</td></tr>`).join('')}</tbody>
+            </table>
+        </div>` : '';
+
     const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold">${r.oC}</td><td class="font-semibold">${r.name}</td><td class="text-[11px] text-slate-500">${r.sp?.pT || '-'}</td><td class="text-center font-black">${r.req}</td><td class="text-center font-black text-blue-600">${r.scn}</td><td class="text-center font-black" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-center font-bold ${r.diff === 0 ? 'text-emerald-600' : (r.diff < 0 ? 'text-rose-600' : 'text-amber-600')}">${r.diff === 0 ? 'مطابق ✓' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${r.diff})`)}</td></tr>`).join('');
     const wrongHtml = comp.wI.length > 0 ? `<h4 class="font-black text-xs text-rose-700 mt-4 mb-2">الأكواد الخاطئة (${comp.wI.length})</h4><table class="pro-table w-full border border-slate-200 rounded-xl overflow-hidden"><thead><tr><th class="w-10 text-center">#</th><th>الكود الخاطئ</th><th>الصنف</th><th>المواصفات</th><th class="w-16 text-center">العدد</th></tr></thead><tbody>${comp.wI.map((w, i) => `<tr class="row-wrong"><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${w.raw}</td><td>${w.name}</td><td class="text-[11px]">${w.sp?.pT || '-'}</td><td class="text-center font-black text-rose-600">${w.qty}</td></tr>`).join('')}</tbody></table>` : '';
 
-    viewer.classList.remove('hidden');
-    viewer.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 pb-3 mb-3"><div><h4 class="font-black text-sm text-slate-900">معاينة: ${a.hallName} — الأسبوع (${a.weekNum})</h4><p class="text-[11px] text-slate-500">${a.date} • أنشأ الطلب: <b>${a.createdBy || 'غير محدد'}</b> • الحالة: <b>${a.approvalStatus === 'PENDING' ? 'بانتظار الاعتماد' : (a.approvalStatus === 'REJECTED' ? 'غير معتمد' : 'معتمد ✓')}</b></p></div><div class="flex gap-2"><button type="button" onclick="el('archiveReportViewer').classList.add('hidden')" class="btn-soft">إغلاق</button></div></div>${swapsBoxHtml}${editAuditHtml}<div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs mb-3"><div class="bg-slate-50 p-2 rounded-xl">المطلوب: <b>${k.tRP}</b></div><div class="bg-slate-50 p-2 rounded-xl">المسحوب: <b>${k.tSP}</b></div><div class="bg-emerald-50 p-2 rounded-xl text-emerald-800">مطابق: <b>${k.mP}%</b></div><div class="bg-rose-50 p-2 rounded-xl text-rose-700">نقص: <b>${k.sS}</b></div><div class="bg-amber-50 p-2 rounded-xl text-amber-800">زيادة: <b>${k.oS}</b></div><div class="bg-rose-50 p-2 rounded-xl text-rose-700">خاطئ: <b>${k.wQT}</b></div></div><div class="max-h-[400px] overflow-y-auto border border-slate-200 rounded-xl"><table class="pro-table w-full"><thead><tr><th class="w-10 text-center">#</th><th>الكود</th><th>الصنف</th><th>المواصفات</th><th class="w-14 text-center">مطلوب</th><th class="w-14 text-center">مسحوب</th><th class="w-14 text-center">فرق</th><th class="w-24 text-center">النتيجة</th></tr></thead><tbody>${rowsHtml || `<tr><td colspan="8" class="text-center py-6">لا توجد أصناف</td></tr>`}</tbody></table></div>${wrongHtml}`;
-    viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    modalBody.innerHTML = `
+        ${editAuditHtml}
+        ${swapsBoxHtml}
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs mb-3">
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المطلوب: <b>${k.tRP}</b></div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المسحوب: <b>${k.tSP}</b></div>
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-emerald-800">مطابق: <b>${k.mP}%</b></div>
+            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">نقص: <b>${k.sS}</b></div>
+            <div class="bg-amber-50 p-2 rounded-xl border border-amber-200 text-amber-800">زيادة: <b>${k.oS}</b></div>
+            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">خاطئ: <b>${k.wQT}</b></div>
+        </div>
+        <div class="max-h-[380px] overflow-y-auto border border-slate-200 rounded-xl">
+            <table class="pro-table w-full">
+                <thead><tr><th class="w-10 text-center">#</th><th>الكود</th><th>الصنف</th><th>المواصفات</th><th class="w-14 text-center">مطلوب</th><th class="w-14 text-center">مسحوب</th><th class="w-14 text-center">فرق</th><th class="w-24 text-center">النتيجة</th></tr></thead>
+                <tbody>${rowsHtml || `<tr><td colspan="8" class="text-center py-6">لا توجد أصناف</td></tr>`}</tbody>
+            </table>
+        </div>
+        ${wrongHtml}
+    `;
+
+    show('archivePreviewModal');
 }
 
 function restoreArchiveToCurrent(id) {
