@@ -2080,6 +2080,12 @@ async function initApp() {
     }
     orderData.forEach(o => { o.manualAdjust = 0; });
     catalogList = catalogList.map(item => nCat(item));
+  if (currentUser && !currentUser.isAdmin) {
+        orderData = [];
+        palmData = [];
+        activeEditingArchiveId = null;
+        currentSessionSwapLog = [];
+    }
     if (el('pasteBehaviorSelect')) el('pasteBehaviorSelect').value = appSettings.pasteMode || 'append';
     appSettings.cloudWebhookUrl = (appSettings.cloudWebhookUrl || localStorage.getItem('company400_cloud_url') || DEFAULT_CLOUD_WEBHOOK_URL).trim();
     if (el('cloudBackupUrlInput')) el('cloudBackupUrlInput').value = appSettings.cloudWebhookUrl;
@@ -3283,37 +3289,7 @@ async function confirmSaveToArchive(forceNewCopy = false) {
         if (btn) btn.disabled = false;
     }
 }
-
-    if (existingIdx !== -1) {
-        const oldArch = archiveList[existingIdx];
-        const auditList = Array.isArray(oldArch.editAuditLog) ? [...oldArch.editAuditLog] : [];
-        const nowFullTime = `${getTodayFormatted()} — ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-
-        if (!isAdmin) {
-            auditList.push({
-                editedBy: currentUser?.name || 'موظف',
-                editedAt: nowFullTime,
-                details: buildArchiveEditDiffSummary(oldArch, localOrderCopy, localPalmCopy, localSwapCopy)
-            });
-            payload.editAuditLog = auditList;
-        }
-
-        archiveList[existingIdx] = { ...archiveList[existingIdx], ...payload };
-    } else {
-        archiveList.unshift({ id: 'ARCH_' + Date.now(), ...payload });
-    }
-
-    activeEditingArchiveId = null; currentSessionSwapLog = [];
-    selectedArchiveWeekFilter = String(wk); openWeekKeys.add(String(wk));
-    clearAllSelections(); orderData = []; palmData = []; closeSaveArchiveModal();
-    populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updateSessionSwapBadgeUI(); updatePendingApprovalsUI();
-    recalculateAndRender(false);
-
-    await saveToIndexedDB(getFullDatabasePayload(false));
-    await syncToExternalCloud(false, true, !isAdmin);
-}
-
-// طلب استعادة نسخة من الأرشيف للتعديل (للموظف)
+   // طلب استعادة نسخة من الأرشيف للتعديل (للموظف)
 function openRestoreRequestModal(archId) {
     const a = archiveList.find(x => x.id === archId);
     if (!a) return;
@@ -4095,7 +4071,7 @@ async function applyImportedDatabasePayload(data, isSilentCloud = false) {
         orderData = data.orderData || [];
         palmData = data.palmData || [];
         activeEditingArchiveId = data.activeEditingArchiveId || null;
-    } else if (orderData.length === 0 && palmData.length === 0 && Array.isArray(data.orderData)) {
+   } else if (currentUser?.isAdmin && orderData.length === 0 && palmData.length === 0 && Array.isArray(data.orderData)) {
         orderData = data.orderData || [];
         palmData = data.palmData || [];
     }
