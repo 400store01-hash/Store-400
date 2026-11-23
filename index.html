@@ -984,12 +984,6 @@ body.no-perm-swaps .perm-swaps{display:none!important}
 <!-- ================= تبويب خريطة الصالات (خاص بالمدير فقط) ================= -->
 <div id="tab-hallsmap" class="tab-panel hidden perm-admin-only no-print space-y-4">
   <!-- صندوق تجربة GPS مؤقت (يمكن حذفه بالكامل بعد التجربة) -->
-<div id="gpsTestBox" class="erp-card p-3 flex flex-wrap items-center justify-between gap-2 bg-amber-50/60 border-amber-200">
-  <div class="text-xs space-y-0.5">
-    <div class="font-black text-slate-900 flex items-center gap-1.5">
-      <i class="fa-solid fa-satellite-dish text-amber-600"></i>
-      <span>تجربة تحديد الموقع الجغرافي (GPS)</span>
-    </div>
     <div id="gpsTestResult" class="text-[11px] text-slate-600 font-mono" dir="ltr">Ready for GPS test...</div>
   </div>
   <button type="button" onclick="runGpsTestOnMap()" class="btn-primary !bg-amber-600 !border-amber-700">
@@ -1103,6 +1097,10 @@ body.no-perm-swaps .perm-swaps{display:none!important}
               <label class="flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg"><input type="checkbox" id="permChk_canViewCatalog" class="accent-indigo-600"><span>قاعدة الأصناف</span></label>
               <label class="flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg"><input type="checkbox" id="permChk_canViewShortcuts" class="accent-indigo-600"><span>المختصرات</span></label>
               <label class="flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg"><input type="checkbox" id="permChk_canViewAnalytics" class="accent-indigo-600"><span>مركز التحليلات</span></label>
+            <label class="flex items-center gap-1.5 bg-white border border-indigo-200 px-2.5 py-1.5 rounded-lg">
+  <input type="checkbox" id="permChk_canEditCurrentWeekArchive" class="accent-indigo-600">
+  <span>استعادة وتعديل أرشيف الأسبوع فقط</span>
+</label>
             </div>
 
             <div class="flex justify-end">
@@ -1525,6 +1523,7 @@ function addNewUserAccount() {
             canViewCatalog: Boolean(el('permChk_canViewCatalog')?.checked),
             canViewShortcuts: Boolean(el('permChk_canViewShortcuts')?.checked),
             canViewAnalytics: Boolean(el('permChk_canViewAnalytics')?.checked),
+          canEditCurrentWeekArchive: Boolean(el('permChk_canEditCurrentWeekArchive')?.checked),
             canViewSettings: false
         };
 
@@ -1591,6 +1590,7 @@ function renderUsersManagementTable() {
         { k: 'canDelete', l: 'حذف/تصفير' },
         { k: 'canViewCatalog', l: 'القاعدة' },
         { k: 'canViewShortcuts', l: 'المختصرات' },
+      { k: 'canEditCurrentWeekArchive', l: 'تعديل أرشيف الأسبوع' },
         { k: 'canViewAnalytics', l: 'التحليلات' }
     ];
 
@@ -3172,6 +3172,18 @@ async function confirmSaveToArchive(forceNewCopy = false) {
         approvedBy: isAdmin ? (currentUser?.name || 'المدير') : '',
         restoreApprovedForUser: ''
     };
+  const oldArch = archiveList[existingIdx];
+const auditList = Array.isArray(oldArch.editAuditLog) ? [...oldArch.editAuditLog] : [];
+const nowFullTime = `${getTodayFormatted()} — ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+if (!isAdmin) {
+    auditList.push({
+        editedBy: currentUser?.name || 'موظف',
+        editedAt: nowFullTime,
+        details: buildArchiveEditDiffSummary(oldArch, localOrderCopy, localPalmCopy, localSwapCopy)
+    });
+    payload.editAuditLog = auditList;
+}
 
     if (existingIdx !== -1) {
         archiveList[existingIdx] = { ...archiveList[existingIdx], ...payload };
@@ -3533,6 +3545,24 @@ function previewArchiveReport(id) {
                 <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10.5px]">${s.time || '-'}</td><td class="font-bold">${s.user || '-'}</td><td class="font-mono font-bold text-rose-700">${s.orderCode}</td><td class="font-mono font-bold text-indigo-700">${s.scannedCode}</td><td class="text-center font-black">${s.qty}</td><td class="text-[11px] font-semibold text-teal-800">${s.type}: ${s.reason}</td></tr>`).join('')}</tbody>
             </table>
         </div>` : '';
+  const auditLog = Array.isArray(a.editAuditLog) ? a.editAuditLog : [];
+const editAuditHtml = (isAdmin && auditLog.length > 0) ? `
+    <div class="mb-4 bg-amber-50/70 border border-amber-300 rounded-xl p-3.5 space-y-2">
+        <h4 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${auditLog.length}):</h4>
+        <div class="space-y-2">
+            ${auditLog.map(ed => `
+                <div class="bg-white border border-amber-200 rounded-lg p-2.5 text-xs space-y-1">
+                    <div class="flex justify-between items-center font-bold text-slate-800">
+                        <span><i class="fa-solid fa-user-pen text-indigo-600 ml-1"></i>${ed.editedBy}</span>
+                        <span class="font-mono text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded" dir="ltr">${ed.editedAt}</span>
+                    </div>
+                    <ul class="list-disc pr-5 text-[11px] text-slate-700 space-y-0.5">
+                        ${(ed.details || []).map(d => `<li>${d}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('')}
+        </div>
+    </div>` : '';
 
     const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold">${r.oC}</td><td class="font-semibold">${r.name}</td><td class="text-[11px] text-slate-500">${r.sp?.pT || '-'}</td><td class="text-center font-black">${r.req}</td><td class="text-center font-black text-blue-600">${r.scn}</td><td class="text-center font-black" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-center font-bold ${r.diff === 0 ? 'text-emerald-600' : (r.diff < 0 ? 'text-rose-600' : 'text-amber-600')}">${r.diff === 0 ? 'مطابق ✓' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${r.diff})`)}</td></tr>`).join('');
     const wrongHtml = comp.wI.length > 0 ? `<h4 class="font-black text-xs text-rose-700 mt-4 mb-2">الأكواد الخاطئة (${comp.wI.length})</h4><table class="pro-table w-full border border-slate-200 rounded-xl overflow-hidden"><thead><tr><th class="w-10 text-center">#</th><th>الكود الخاطئ</th><th>الصنف</th><th>المواصفات</th><th class="w-16 text-center">العدد</th></tr></thead><tbody>${comp.wI.map((w, i) => `<tr class="row-wrong"><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${w.raw}</td><td>${w.name}</td><td class="text-[11px]">${w.sp?.pT || '-'}</td><td class="text-center font-black text-rose-600">${w.qty}</td></tr>`).join('')}</tbody></table>` : '';
@@ -3543,23 +3573,40 @@ function previewArchiveReport(id) {
 }
 
 function restoreArchiveToCurrent(id) {
-    const a = archiveList.find(x => x.id === id); if (!a) return;
+    const a = archiveList.find(x => x.id === id);
+    if (!a) return;
+
     const isAdmin = Boolean(currentUser?.isAdmin);
+    const curWeek = String(getCurrentISOWeek());
+    const isCurrentWeekReport = String(a.weekNum || '').trim() === curWeek;
+    const canEditThisWeek = !isAdmin && hasPerm('canEditCurrentWeekArchive') && isCurrentWeekReport;
     const isStaffApproved = !isAdmin && a.restoreApprovedForUser && nw(a.restoreApprovedForUser) === nw(currentUser?.name || '');
-    if (!isAdmin && !isStaffApproved) {
+
+    if (!isAdmin && !canEditThisWeek && !isStaffApproved) {
+        if (!isCurrentWeekReport) {
+            alert(`يمكنك تعديل تقارير الأسبوع الحالي (${curWeek}) فقط، أو طلب استعادة للأسابيع السابقة.`);
+        }
         openRestoreRequestModal(id);
         return;
     }
+
     if (!confirm(`استرجاع (${a.hallName} - أسبوع ${a.weekNum}) للتعديل؟`)) return;
-    saveUndoSnapshot(`استرجاع ${a.hallName}`); clearAllSelections();
+    saveUndoSnapshot(`استرجاع ${a.hallName}`);
+    clearAllSelections();
     activeEditingArchiveId = a.id;
-    orderData = JSON.parse(JSON.stringify(a.orderData || [])); orderData.forEach(o => { o.manualAdjust = 0; });
+    orderData = JSON.parse(JSON.stringify(a.orderData || []));
+    orderData.forEach(o => { o.manualAdjust = 0; });
     palmData = JSON.parse(JSON.stringify(a.palmData || []));
     currentSessionSwapLog = JSON.parse(JSON.stringify(a.swapLog || []));
+    if (!Array.isArray(a.editAuditLog)) a.editAuditLog = [];
+
     if (el('orderRefTitle')) el('orderRefTitle').innerText = a.hallName;
     if (el('headerDateText')) el('headerDateText').innerText = a.date;
-    updateEditingArchiveBannerUI(); updateSessionSwapBadgeUI(); switchTab('sheet1'); recalculateAndRender(false);
-    showPasteToast("تم استرجاع النسخة للتعديل ✏️", `عند الانتهاء اضغط حفظ لإرسال التعديلات`);
+    updateEditingArchiveBannerUI();
+    updateSessionSwapBadgeUI();
+    switchTab('sheet1');
+    recalculateAndRender(false);
+    showPasteToast("تم استرجاع أرشيف الأسبوع للتعديل ✏️", "سيتم تسجيل كل تعديل مع التوقيت تلقائياً");
 }
 
 function deleteArchiveItem(id) {
@@ -4619,6 +4666,40 @@ window.addEventListener('beforeunload', () => {
         currentUser = null;
     }
 });
+  function buildArchiveEditDiffSummary(oldArch, newOrder, newPalm, newSwaps) {
+    const changes = [];
+    const oldOrderMap = new Map((oldArch.orderData || []).map(o => [nc(o.code), parseFloat(o.reqQty) || 0]));
+    const newOrderMap = new Map((newOrder || []).map(o => [nc(o.code), parseFloat(o.reqQty) || 0]));
+
+    newOrderMap.forEach((nQty, code) => {
+        if (!oldOrderMap.has(code)) {
+            changes.push(`إضافة صنف للطلبية (${code}) بكمية (${nQty})`);
+        } else if (oldOrderMap.get(code) !== nQty) {
+            changes.push(`تعديل مطلوب الصنف (${code}) من (${oldOrderMap.get(code)}) إلى (${nQty})`);
+        }
+    });
+
+    oldOrderMap.forEach((oQty, code) => {
+        if (!newOrderMap.has(code)) {
+            changes.push(`حذف صنف من الطلبية (${code}) كان مطلوب (${oQty})`);
+        }
+    });
+
+    const sumPalm = (arr) => (arr || []).reduce((acc, p) => acc + (parseFloat(p.qty) || 0), 0);
+    const oldPalmQty = sumPalm(oldArch.palmData);
+    const newPalmQty = sumPalm(newPalm);
+    if (oldPalmQty !== newPalmQty) {
+        changes.push(`تغيير إجمالي مسحوب البالم من (${oldPalmQty}) إلى (${newPalmQty})`);
+    }
+
+    const oldSwapsLen = Array.isArray(oldArch.swapLog) ? oldArch.swapLog.length : 0;
+    const newSwapsLen = Array.isArray(newSwaps) ? newSwaps.length : 0;
+    if (newSwapsLen > oldSwapsLen) {
+        changes.push(`إضافة (${newSwapsLen - oldSwapsLen}) حركة استبدال أو اعتماد`);
+    }
+
+    return changes.length > 0 ? changes : ["حفظ النسخة بعد المراجعة دون تغيير رقمي في الكميات"];
+}
 </script>
 </body>
 </html> 
