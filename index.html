@@ -1629,7 +1629,13 @@ function renderUsersManagementTable() {
         </tr>`;
     }).join('');
 }
-
+function setCloudStatusPill(stateText, colorCls = "text-slate-600") {
+    const pillText = el('cloudSyncPillText');
+    if (pillText) {
+        pillText.textContent = stateText;
+        pillText.className = colorCls;
+    }
+}
 // ================= 1. إدارة النافذة الموحدة (رادار • قصة • تشابه) =================
 function openUnifiedToolsModal(defaultSub = 'radar') {
     show('unifiedToolsModal');
