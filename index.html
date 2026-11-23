@@ -143,6 +143,31 @@ body.no-perm-swaps .perm-swaps{display:none!important}
   .basic-print-table tr{break-inside:avoid;page-break-inside:avoid}
   .basic-print-table thead{display:table-header-group}
 }
+  /* ================= تحسينات التوافق مع شاشات الموبايل ================= */
+@media (max-width: 768px) {
+  .pro-table {
+    table-layout: auto !important;
+    min-width: 680px;
+  }
+  .independent-scroll-panel {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    max-height: 65vh;
+    min-height: 280px;
+  }
+  input, select, textarea {
+    font-size: 16px !important; /* يمنع تكبير الشاشة التلقائي في آيفون عند النقر */
+  }
+  .nav-tab {
+    padding: 9px 10px !important;
+    font-size: 11px !important;
+  }
+  .btn-soft, .btn-primary {
+    padding: 8px 10px !important;
+    font-size: 11.5px !important;
+  }
+}
 </style>
 </head>
 <body class="labels-locked">
@@ -1094,6 +1119,7 @@ body.no-perm-swaps .perm-swaps{display:none!important}
                   <th class="w-20 text-center">الرمز</th>
                   <th class="w-20 text-center">الدور</th>
                   <th>الصلاحيات الممنوحة (انقر للتبديل المباشر)</th>
+                  <th class="w-44 text-center">آخر ظهور وموقع</th>
                   <th class="w-14 text-center">حذف</th>
                 </tr>
               </thead>
@@ -1245,8 +1271,7 @@ window.INITIAL_APP_STATE = {
         theme: "light",
         cloudWebhookUrl: "https://script.google.com/macros/s/AKfycbyKAxGaC_3w-rjkno87Q7eHfWxDiIgTxKkuJ8CZGznN5yhb2fj3OYW6mVQw5_X0pyfpWw/exec",
         usersList: [
-            { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } },
-            { id: "USR_STAFF1", name: "موظف التحضير", password: "100", isAdmin: false, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: false, canDelete: false, canViewCatalog: false, canViewShortcuts: false, canViewAnalytics: false, canViewSettings: false } }
+            { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } }
         ]
     }
 };
@@ -1277,9 +1302,8 @@ let openWeekKeys = new Set(), selectedArchiveWeekFilter = '', selectedArchiveId 
 let localFileHandle = null, autoDiskSaveTimer = null, autoCloudSaveTimer = null;
 
 const DEFAULT_USERS_LIST = [
-    { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } },
-    { id: "USR_STAFF1", name: "موظف التحضير", password: "100", isAdmin: false, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: false, canDelete: false, canViewCatalog: false, canViewShortcuts: false, canViewAnalytics: false, canViewSettings: false } }
-];
+    { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } }
+    ];
 let currentUser = DEFAULT_USERS_LIST[0];
 
 let activeAnalyticsSubTab = 'overview', activeAnalyticsItemClass = 'best_selling';
@@ -1570,6 +1594,15 @@ function renderUsersManagementTable() {
         { k: 'canViewAnalytics', l: 'التحليلات' }
     ];
 
+    const formatLastSeenCell = (u) => {
+        if (u.isAdmin) return `<span class="text-[10.5px] text-slate-400">مدير النظام</span>`;
+        if (!u.lastSeenAt) return `<span class="text-[10px] text-slate-400">لم يسجل دخول بعد</span>`;
+        const mapLink = u.lastMapUrl
+            ? `<a href="${u.lastMapUrl}" target="_blank" class="inline-block mt-0.5 text-[10px] font-black text-indigo-600 hover:underline"><i class="fa-solid fa-location-dot text-rose-500 ml-1"></i>عرض آخر موقع</a>`
+            : `<div class="text-[10px] text-slate-400">${u.lastLocation || ''}</div>`;
+        return `<div class="text-[10.5px] font-bold text-slate-700">${u.lastSeenAt}</div>${mapLink}`;
+    };
+
     tb.innerHTML = appSettings.usersList.map((u, idx) => {
         const permsBadges = u.isAdmin
             ? `<span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold">كافة الصلاحيات الإدارية والاعتماد (انقر على الاسم أو الرمز للتعديل)</span>`
@@ -1584,17 +1617,10 @@ function renderUsersManagementTable() {
             <td contenteditable="true" onblur="updateUserField('${escAttr(u.id)}','password',this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" class="text-center font-mono font-bold text-indigo-600">${u.password}</td>
             <td class="text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ${u.isAdmin ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-50 text-amber-800'}">${u.isAdmin ? 'مدير' : 'موظف'}</span></td>
             <td>${permsBadges}</td>
+            <td class="text-center">${formatLastSeenCell(u)}</td>
             <td class="text-center">${u.id === 'USR_ADMIN' ? '-' : `<button type="button" onclick="deleteUserAccount('${escAttr(u.id)}')" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button>`}</td>
         </tr>`;
     }).join('');
-}
-
-function setCloudStatusPill(stateText, colorCls = "text-slate-600") {
-    const pillText = el('cloudSyncPillText');
-    if (pillText) {
-        pillText.textContent = stateText;
-        pillText.className = colorCls;
-    }
 }
 
 // ================= 1. إدارة النافذة الموحدة (رادار • قصة • تشابه) =================
@@ -4521,6 +4547,78 @@ function captureStaffGpsLocation(silent = false) {
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
 }
+  // ================= تسجيل آخر ظهور وموقع للموظف عند الدخول فقط =================
+function captureEmployeeLastSeenLocation(userObj) {
+    if (!userObj || userObj.isAdmin) return;
+    const nowStr = `${getTodayFormatted()} ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+    const uRef = appSettings.usersList.find(u => u.id === userObj.id);
+    if (!uRef) return;
+
+    uRef.lastSeenAt = nowStr;
+    uRef.lastLocation = "جاري تحديد الموقع...";
+
+    const pushLocationToCloud = () => {
+        saveToIndexedDB(getFullDatabasePayload(false));
+        const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
+        if (url) {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    lightStaffUpdate: true,
+                    timestamp: new Date().toISOString(),
+                    userLocationUpdate: {
+                        userId: uRef.id,
+                        name: uRef.name,
+                        lastSeenAt: uRef.lastSeenAt,
+                        lastLocation: uRef.lastLocation
+                    }
+                })
+            }).catch(() => {});
+        }
+    };
+
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude.toFixed(5);
+                const lng = pos.coords.longitude.toFixed(5);
+                uRef.lastLocation = `${lat}, ${lng}`;
+                uRef.lastMapUrl = `https://maps.google.com/?q=${lat},${lng}`;
+                pushLocationToCloud();
+            },
+            () => {
+                uRef.lastLocation = "تم الدخول (الموقع غير مفعّل بالجهاز)";
+                pushLocationToCloud();
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    } else {
+        uRef.lastLocation = "تم الدخول (المتصفح لا يدعم GPS)";
+        pushLocationToCloud();
+    }
+}
+
+const _origVerifyPasswordForLoc = verifyPassword;
+verifyPassword = async function () {
+    await _origVerifyPasswordForLoc();
+    if (currentUser && !currentUser.isAdmin) {
+        captureEmployeeLastSeenLocation(currentUser);
+    }
+};
+
+function logoutCurrentUser() {
+    currentUser = null;
+    if (el('passwordInput')) el('passwordInput').value = '';
+    show('passwordModal');
+    setTimeout(() => el('passwordInput')?.focus(), 60);
+}
+
+window.addEventListener('beforeunload', () => {
+    if (currentUser && !currentUser.isAdmin) {
+        currentUser = null;
+    }
+});
 </script>
 </body>
 </html> 
