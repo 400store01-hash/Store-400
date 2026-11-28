@@ -5,10 +5,10 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js');
     });
   }
-</script>
+</script> 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>منظومة التشييك والمطابقة  — Pro ERP — Ahmad</title>
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
@@ -432,7 +432,6 @@ body.no-perm-swaps .perm-swaps{display:none!important}
     </div>
   </div>
 </div>
-
 <!-- 9. نافذة معاينة تقرير الأرشيف وسجل التعديلات والاعتماد -->
 <div id="archivePreviewModal" onclick="if(event.target===this)hide('archivePreviewModal')" class="modal-backdrop fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 no-print">
   <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full overflow-hidden max-h-[90vh] flex flex-col">
@@ -443,7 +442,6 @@ body.no-perm-swaps .perm-swaps{display:none!important}
     </div>
   </div>
 </div>
-
 <!-- إشعار عائم -->
 <div id="pasteToast" style="display:none" class="fixed bottom-5 left-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl border border-slate-700 items-center gap-3 no-print">
   <i class="fa-solid fa-circle-check text-lg text-emerald-400"></i>
@@ -1176,8 +1174,6 @@ body.no-perm-swaps .perm-swaps{display:none!important}
           <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-600">رابط الخادم السحابي (Google Script / Webhook URL):</label>
             <input type="url" id="cloudBackupUrlInput" dir="ltr" onchange="saveCloudUrlSetting(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono outline-none">
-            <label class="block text-xs font-bold text-slate-600 pt-1">رمز الوصول للخادم (يُحفظ على هذا الجهاز فقط):</label>
-            <input type="password" id="cloudTokenInput" dir="ltr" autocomplete="off" onchange="saveCloudToken(this.value)" placeholder="يُطلب فقط إذا فعّلت حماية الخادم" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono outline-none">
             <div class="flex flex-wrap gap-2 pt-1">
               <button type="button" onclick="syncToExternalCloud(false)" class="btn-primary"><i class="fa-solid fa-cloud-arrow-up"></i> رفع يدوي فوري للسحابة</button>
               <button type="button" onclick="restoreFromExternalCloud(false)" class="btn-soft !text-amber-700"><i class="fa-solid fa-cloud-arrow-down"></i> استعادة من السحابة</button>
@@ -1234,7 +1230,6 @@ body.no-perm-swaps .perm-swaps{display:none!important}
               <select id="pasteBehaviorSelect" onchange="saveAppState(true)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold outline-none">
                 <option value="append">تحديث ودمج ذكي</option>
                 <option value="replace">استبدال كامل</option>
-                <option value="sum">جمع الكميات مع الموجود</option>
               </select>
             </div>
 
@@ -1274,12 +1269,13 @@ window.INITIAL_APP_STATE = {
     restoreRequestsList: [],
     logo: "",
     settings: {
+        password: "400",
         pasteMode: "append",
         soundEnabled: true,
         theme: "light",
         cloudWebhookUrl: "https://script.google.com/macros/s/AKfycbyKAxGaC_3w-rjkno87Q7eHfWxDiIgTxKkuJ8CZGznN5yhb2fj3OYW6mVQw5_X0pyfpWw/exec",
         usersList: [
-            { id: "USR_ADMIN", name: "المدير العام", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true, canEditCurrentWeekArchive: true } }
+            { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } }
         ]
     }
 };
@@ -1292,62 +1288,7 @@ const el = id => document.getElementById(id),
 function showModalById(id) { show(id); }
 function hideModalById(id) { hide(id); }
 function isModalOpen(id) { const e = el(id); return e ? e.classList.contains('active') : false; }
-function escAttr(s) { return String(s === null || s === undefined ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n\u2028\u2029]+/g, ' ').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-// ===== تعقيم المدخلات والمخرجات =====
-function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-function cleanText(s) { return String(s === null || s === undefined ? '' : s).replace(/[<>\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
-function safeMapUrl(u) { return /^https:\/\/maps\.google\.com\/\?q=-?\d{1,3}(\.\d+)?,-?\d{1,3}(\.\d+)?$/.test(String(u || '')) ? String(u) : ''; }
-function sanitizeDeep(v, depth = 0) {
-    if (depth > 40) return v;
-    if (typeof v === 'string') return cleanText(v);
-    if (Array.isArray(v)) { for (let i = 0; i < v.length; i++) v[i] = sanitizeDeep(v[i], depth + 1); return v; }
-    if (v && typeof v === 'object') {
-        for (const k of Object.keys(v)) {
-            if (k === '__proto__' || k === 'constructor' || k === 'prototype') { delete v[k]; continue; }
-            v[k] = sanitizeDeep(v[k], depth + 1);
-        }
-        if (typeof v.lastMapUrl === 'string') v.lastMapUrl = safeMapUrl(v.lastMapUrl);
-        return v;
-    }
-    return v;
-}
-function deepClone(x) { try { return structuredClone(x); } catch (e) { return JSON.parse(JSON.stringify(x)); } }
-
-// ===== [التعديل 1] ختم التعديلات وشواهد الحذف وإصدار القاعدة =====
-let tombstones = {}, lastSyncedCatalogSig = '', lastCloudDbVersion = 0, lastCloudCatalogVer = 0, logoDirty = false;
-let syncInFlight = false, needsPush = null, queuedPush = null, lastConflictToastAt = 0;
-
-function touch(o) { if (o && typeof o === 'object') o.updatedAt = Date.now(); return o; }
-function tsOf(x) { const t = new Date(x || 0).getTime(); return isNaN(t) ? 0 : t; }
-function markDeleted(id) {
-    if (!id) return;
-    tombstones[id] = Date.now();
-    const lim = Date.now() - 60 * 86400000;
-    Object.keys(tombstones).forEach(k => { if (tombstones[k] < lim) delete tombstones[k]; });
-}
-function idNum(x) { const m = String(x && x.id || '').match(/(\d+)$/); return m ? parseInt(m[1], 10) : 0; }
-function mergeById(localArr, remoteArr, tomb) {
-    const map = new Map();
-    (localArr || []).forEach(it => { if (it && it.id && !tomb[it.id]) map.set(it.id, it); });
-    (remoteArr || []).forEach(it => {
-        if (!it || !it.id || tomb[it.id]) return;
-        const cur = map.get(it.id);
-        if (!cur || (it.updatedAt || 0) > (cur.updatedAt || 0)) map.set(it.id, it);
-    });
-    return Array.from(map.values());
-}
-function sortIdDesc(arr) { return arr.sort((a, b) => idNum(b) - idNum(a)); }
-function catalogSig() {
-    const s = JSON.stringify([catalogList, shortcutList]); let h = 5381;
-    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
-    return catalogList.length + ':' + shortcutList.length + ':' + h;
-}
-
-const _bciCache = new Map();
-let loginFails = 0, loginLockUntil = 0;
-function getCloudToken() { try { return localStorage.getItem('company400_cloud_token') || ''; } catch (e) { return ''; } }
-function saveCloudToken(v) { try { localStorage.setItem('company400_cloud_token', String(v || '').trim()); } catch (e) {} showPasteToast("تم حفظ رمز الوصول", "يُحفظ على هذا الجهاز فقط"); }
+function escAttr(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
 let catalogList = [], shortcutList = [], orderData = [], palmData = [], archiveList = [], restoreRequestsList = [], currentSessionSwapLog = [];
 let catByExactCodeMap = new Map(), shortCodeToMainsMap = new Map(), mainCodeToShortMap = new Map(), shortCodeToNameMap = new Map();
@@ -1365,10 +1306,10 @@ let openWeekKeys = new Set(), selectedArchiveWeekFilter = '', selectedArchiveId 
 let localFileHandle = null, autoDiskSaveTimer = null, autoCloudSaveTimer = null;
 
 const DEFAULT_USERS_LIST = [
-    { id: "USR_ADMIN", name: "المدير العام", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true, canEditCurrentWeekArchive: true } }
+    { id: "USR_ADMIN", name: "المدير العام", password: "400", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } }
 ];
-let currentUser = null;
-let sessionToken = "";
+let currentUser = DEFAULT_USERS_LIST[0];
+
 let activeAnalyticsSubTab = 'overview', activeAnalyticsItemClass = 'best_selling';
 let analyticsCharts = { trend: null, status: null, stories: null, halls: null };
 let cachedAnalyticsData = null;
@@ -1377,7 +1318,7 @@ let currentPrintContext = 'CURRENT', currentManualPasteMode = 'order';
 let filteredPalmIndices = [], filteredCatalogIndices = [], filteredShortcutIndices = [];
 let currentFilter = 'ALL', activeTab = 'sheet1', targetPasteOverride = 'order';
 const DEFAULT_CLOUD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyKAxGaC_3w-rjkno87Q7eHfWxDiIgTxKkuJ8CZGznN5yhb2fj3OYW6mVQw5_X0pyfpWw/exec";
-let appSettings = { pasteMode: "append", soundEnabled: true, theme: "light", cloudWebhookUrl: DEFAULT_CLOUD_WEBHOOK_URL, usersList: JSON.parse(JSON.stringify(DEFAULT_USERS_LIST)) };
+let appSettings = { password: "400", pasteMode: "append", soundEnabled: true, theme: "light", cloudWebhookUrl: DEFAULT_CLOUD_WEBHOOK_URL, usersList: JSON.parse(JSON.stringify(DEFAULT_USERS_LIST)) };
 let currentDbVersion = 51;
 const ROW_HEIGHT = 36, VISIBLE_BUFFER = 35, DB_NAME = "AhmadDB", DB_STORE = "Store";
 
@@ -1468,8 +1409,7 @@ function applyRolePermissionsUI() {
     updatePendingApprovalsUI();
     updateSessionSwapBadgeUI();
 }
-
-function triggerLogoUploadIfAdmin() {
+  function triggerLogoUploadIfAdmin() {
     if (!currentUser?.isAdmin) return;
     el('logoInput')?.click();
 }
@@ -1517,7 +1457,6 @@ function switchSettingsSubTab(sub) {
 
 function logoutCurrentUser() {
     currentUser = null;
-    sessionToken = "";
     enforceAdminOnlyVisibility();
     if (el('passwordInput')) el('passwordInput').value = '';
     show('passwordModal');
@@ -1585,11 +1524,11 @@ function onNewUserRoleTypeChange(val) {
 
 function addNewUserAccount() {
     if (!currentUser?.isAdmin) return;
-    const name = cleanText((el('newUserName')?.value || '').trim());
+    const name = (el('newUserName')?.value || '').trim();
     const pass = nd((el('newUserPass')?.value || '').trim());
     const isAdmin = el('newUserRoleType')?.value === 'ADMIN';
     if (!name || !pass) { alert("أدخل اسم المستخدم ورمز الدخول!"); return; }
-    if (pass.length < 4 && !confirm("رمز الدخول قصير (أقل من 4 خانات) وسهل التخمين. المتابعة؟")) return;
+    if (appSettings.usersList.some(u => u.password === pass)) { alert("رمز الدخول مستخدم لموظف آخر! اختر رمزاً مختلفاً لتمييز كل موظف."); return; }
 
     const perms = isAdmin
         ? { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true, canEditCurrentWeekArchive: true }
@@ -1608,7 +1547,7 @@ function addNewUserAccount() {
             canViewSettings: false
         };
 
-    appSettings.usersList.push({ id: 'USR_' + Date.now(), name, password: pass, isAdmin, perms, updatedAt: Date.now() });
+    appSettings.usersList.push({ id: 'USR_' + Date.now(), name, password: pass, isAdmin, perms });
     if (el('newUserName')) el('newUserName').value = '';
     if (el('newUserPass')) el('newUserPass').value = '';
     ensureUsersListInitialized();
@@ -1623,31 +1562,33 @@ function toggleUserPermissionFlag(userId, permKey) {
     if (!u || u.isAdmin) return;
     if (!u.perms) u.perms = {};
     u.perms[permKey] = !u.perms[permKey];
-    touch(u);
     renderUsersManagementTable();
     saveAppState(true);
     showPasteToast("تم تحديث الصلاحية", `${u.name}`);
 }
 
-function changeUserPassword(userId) {
+function updateUserField(userId, field, value) {
     if (!currentUser?.isAdmin) return;
-    const u = appSettings.usersList.find(x => x.id === userId); if (!u) return;
-    const p = nd((prompt(`أدخل رمز الدخول الجديد للموظف (${u.name}):`) || '').trim());
-    if (!p) return;
-    if (p.length < 4 && !confirm("الرمز قصير (أقل من 4 خانات) وسهل التخمين. المتابعة؟")) return;
-    u.password = p;
-    delete u.passHash; delete u.salt;
-    touch(u);
-    renderUsersManagementTable();
+    const u = appSettings.usersList.find(x => x.id === userId);
+    const cleanVal = field === 'password' ? nd(value.trim()) : value.trim();
+    if (!u || !cleanVal) { renderUsersManagementTable(); return; }
+    if (field === 'password' && appSettings.usersList.some(x => x.id !== userId && x.password === cleanVal)) {
+        alert("هذا الرمز مستخدم لموظف آخر! اختر رمزاً مختلفاً.");
+        renderUsersManagementTable();
+        return;
+    }
+    u[field] = cleanVal;
+    if (u.id === currentUser.id) currentUser[field] = cleanVal;
+    ensureUsersListInitialized();
+    applyRolePermissionsUI();
     saveAppState(true);
-    showPasteToast("تم تغيير الرمز ✓", `سيتم رفع الرمز الجديد لـ (${u.name}) إلى السحابة`);
+    showPasteToast("تم التحديث ✓", "حُفظ الاسم والرمز الجديد في السحابة");
 }
 
 function deleteUserAccount(userId) {
     if (!currentUser?.isAdmin) return;
     if (userId === 'USR_ADMIN' || appSettings.usersList.length <= 1) { alert("لا يمكن حذف حساب المدير الأساسي!"); return; }
     if (!confirm("حذف حساب هذا الموظف؟")) return;
-    markDeleted(userId);
     appSettings.usersList = appSettings.usersList.filter(u => u.id !== userId);
     ensureUsersListInitialized();
     renderUsersManagementTable();
@@ -1677,9 +1618,9 @@ function renderUsersManagementTable() {
         if (u.isAdmin) return `<span class="text-[10.5px] text-slate-400">مدير النظام</span>`;
         if (!u.lastSeenAt) return `<span class="text-[10px] text-slate-400">لم يسجل دخول بعد</span>`;
         const mapLink = u.lastMapUrl
-            ? `<a href="${esc(safeMapUrl(u.lastMapUrl))}" target="_blank" rel="noopener noreferrer" class="inline-block mt-0.5 text-[10px] font-black text-indigo-600 hover:underline"><i class="fa-solid fa-location-dot text-rose-500 ml-1"></i>عرض آخر موقع</a>`
-            : `<div class="text-[10px] text-slate-400">${esc(u.lastLocation || '')}</div>`;
-        return `<div class="text-[10.5px] font-bold text-slate-700">${esc(u.lastSeenAt)}</div>${mapLink}`;
+            ? `<a href="${u.lastMapUrl}" target="_blank" class="inline-block mt-0.5 text-[10px] font-black text-indigo-600 hover:underline"><i class="fa-solid fa-location-dot text-rose-500 ml-1"></i>عرض آخر موقع</a>`
+            : `<div class="text-[10px] text-slate-400">${u.lastLocation || ''}</div>`;
+        return `<div class="text-[10.5px] font-bold text-slate-700">${u.lastSeenAt}</div>${mapLink}`;
     };
 
     tb.innerHTML = appSettings.usersList.map((u, idx) => {
@@ -1687,13 +1628,13 @@ function renderUsersManagementTable() {
             ? `<span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold">كافة الصلاحيات الإدارية والاعتماد (انقر على الاسم أو الرمز للتعديل)</span>`
             : `<div class="flex flex-wrap gap-1">${permLabels.map(p => {
                 const active = Boolean(u.perms?.[p.k]);
-                return `<button type="button" onclick="toggleUserPermissionFlag('${escAttr(u.id)}','${esc(p.k)}')" class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200 line-through'}">${esc(p.l)}</button>`;
+                return `<button type="button" onclick="toggleUserPermissionFlag('${escAttr(u.id)}','${p.k}')" class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200 line-through'}">${p.l}</button>`;
             }).join('')}</div>`;
 
         return `<tr>
             <td class="text-center text-slate-400 font-bold">${idx + 1}</td>
-            <td contenteditable="true" onblur="updateUserField('${escAttr(u.id)}','name',this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" class="font-bold text-slate-900">${esc(u.name)}</td>
-            <td class="text-center"><button type="button" onclick="changeUserPassword('${escAttr(u.id)}')" class="btn-soft !py-0.5 !text-[10px]"><i class="fa-solid fa-key"></i> تغيير</button></td>
+            <td contenteditable="true" onblur="updateUserField('${escAttr(u.id)}','name',this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" class="font-bold text-slate-900">${u.name}</td>
+            <td contenteditable="true" onblur="updateUserField('${escAttr(u.id)}','password',this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" class="text-center font-mono font-bold text-indigo-600">${u.password}</td>
             <td class="text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ${u.isAdmin ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-50 text-amber-800'}">${u.isAdmin ? 'مدير' : 'موظف'}</span></td>
             <td>${permsBadges}</td>
             <td class="text-center">${formatLastSeenCell(u)}</td>
@@ -1701,7 +1642,6 @@ function renderUsersManagementTable() {
         </tr>`;
     }).join('');
 }
-
 function setCloudStatusPill(stateText, colorCls = "text-slate-600") {
     const pillText = el('cloudSyncPillText');
     if (pillText) {
@@ -1709,7 +1649,6 @@ function setCloudStatusPill(stateText, colorCls = "text-slate-600") {
         pillText.className = colorCls;
     }
 }
-
 // ================= 1. إدارة النافذة الموحدة (رادار • قصة • تشابه) =================
 function openUnifiedToolsModal(defaultSub = 'radar') {
     show('unifiedToolsModal');
@@ -1757,7 +1696,7 @@ function updateEditingArchiveBannerUI() {
     const existingArch = activeEditingArchiveId ? archiveList.find(x => x.id === activeEditingArchiveId) : null;
     if (existingArch) {
         if (banner) banner.classList.remove('hidden');
-        if (bannerText) bannerText.innerHTML = `أنت الآن تعدل تقرير <b>(${esc(existingArch.hallName)} — الأسبوع ${esc(existingArch.weekNum)})</b> — عند الحفظ سيتم ${currentUser?.isAdmin ? 'التحديث على النسخة الأصلية مباشرة' : 'إرسال التعديلات للاعتماد عند المدير'}.`;
+        if (bannerText) bannerText.innerHTML = `أنت الآن تعدل تقرير <b>(${existingArch.hallName} — الأسبوع ${existingArch.weekNum})</b> — عند الحفظ سيتم ${currentUser?.isAdmin ? 'التحديث على النسخة الأصلية مباشرة' : 'إرسال التعديلات للاعتماد عند المدير'}.`;
         if (headerBtnText) headerBtnText.textContent = currentUser?.isAdmin ? "تحديث الأصلية" : "حفظ وانتظار الاعتماد";
     } else {
         activeEditingArchiveId = null;
@@ -1895,10 +1834,10 @@ function saveUndoSnapshot(actionLabel) {
     reconciliationUndoStack.push({
         label: actionLabel || "عملية",
         time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        orderData: deepClone(orderData),
-        palmData: deepClone(palmData),
-        shortcutList: deepClone(shortcutList),
-        swapLog: deepClone(currentSessionSwapLog),
+        orderData: JSON.parse(JSON.stringify(orderData)),
+        palmData: JSON.parse(JSON.stringify(palmData)),
+        shortcutList: JSON.parse(JSON.stringify(shortcutList)),
+        swapLog: JSON.parse(JSON.stringify(currentSessionSwapLog)),
         activeEditingArchiveId
     });
     if (reconciliationUndoStack.length > MAX_UNDO_STEPS) reconciliationUndoStack.shift();
@@ -1999,20 +1938,20 @@ function updateLiveScanTicker(code) {
     if (matchedOrder) {
         if (matchedOrder.diff > 0) {
             ticker.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border bg-amber-50 border-amber-200 text-amber-800";
-            ticker.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> زيادة: ${c} (${esc(matchedOrder.scn)}/${esc(matchedOrder.req)})`;
+            ticker.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> زيادة: ${c} (${matchedOrder.scn}/${matchedOrder.req})`;
             playScanSound('OVERAGE');
         } else if (matchedOrder.diff === 0) {
             ticker.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-            ticker.innerHTML = `<i class="fa-solid fa-check-double"></i> اكتمل ✓ ${c} (${esc(matchedOrder.scn)}/${esc(matchedOrder.req)})`;
+            ticker.innerHTML = `<i class="fa-solid fa-check-double"></i> اكتمل ✓ ${c} (${matchedOrder.scn}/${matchedOrder.req})`;
             playScanSound('MATCH');
         } else {
             ticker.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border bg-sky-50 border-sky-200 text-sky-800";
-            ticker.innerHTML = `<i class="fa-solid fa-circle-check"></i> صحيح: ${c} (${esc(matchedOrder.scn)}/${esc(matchedOrder.req)})`;
+            ticker.innerHTML = `<i class="fa-solid fa-circle-check"></i> صحيح: ${c} (${matchedOrder.scn}/${matchedOrder.req})`;
             playScanSound('OK');
         }
     } else {
         ticker.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border bg-rose-50 border-rose-200 text-rose-800";
-        ticker.innerHTML = `<i class="fa-solid fa-ban"></i> خاطئ: ${c} (${esc(info.name)})`;
+        ticker.innerHTML = `<i class="fa-solid fa-ban"></i> خاطئ: ${c} (${info.name})`;
         playScanSound('WRONG');
     }
 }
@@ -2049,45 +1988,21 @@ function toggleLabelsLockManual() {
     showPasteToast("تم التحديث", isLabelsLocked ? "التسميات مقفلة الآن" : "التسميات مفتوحة للتعديل");
 }
 
-let _dbPromise = null, _lastStorageWarn = 0;
 function openIndexedDB() {
-    if (_dbPromise) return _dbPromise;
-    _dbPromise = new Promise((res, rej) => {
+    return new Promise((res, rej) => {
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = e => { if (!e.target.result.objectStoreNames.contains(DB_STORE)) e.target.result.createObjectStore(DB_STORE); };
-        req.onsuccess = e => { const db = e.target.result; db.onclose = () => { _dbPromise = null; }; db.onversionchange = () => { db.close(); _dbPromise = null; }; res(db); };
-        req.onerror = e => { _dbPromise = null; rej(e.target.error); };
-        req.onblocked = () => { _dbPromise = null; rej(new Error('IndexedDB blocked')); };
+        req.onsuccess = e => res(e.target.result);
+        req.onerror = e => rej(e.target.error);
     });
-    return _dbPromise;
 }
 
-function notifyStorageFailure(e) {
-    console.error('IndexedDB error:', e);
-    if (Date.now() - _lastStorageWarn < 30000) return;
-    _lastStorageWarn = Date.now();
-    showPasteToast("⚠ تعذر الحفظ المحلي", "صدّر نسخة JSON احتياطية الآن (الإعدادات ← السحابة)");
-}
-
-async function saveToIndexedDB(st) {
-    try {
-        const db = await openIndexedDB();
-        await new Promise((res, rej) => {
-            const tx = db.transaction(DB_STORE, "readwrite");
-            tx.objectStore(DB_STORE).put(st, "st");
-            tx.oncomplete = () => res();
-            tx.onerror = () => rej(tx.error);
-            tx.onabort = () => rej(tx.error || new Error('transaction aborted'));
-        });
-        return true;
-    } catch (e) { _dbPromise = null; notifyStorageFailure(e); return false; }
-}
-
+async function saveToIndexedDB(st) { try { const db = await openIndexedDB(); db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE).put(st, "st"); } catch (e) {} }
 async function loadFromIndexedDB() {
     try {
         const db = await openIndexedDB();
-        return await new Promise(res => { const req = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get("st"); req.onsuccess = () => res(req.result || null); req.onerror = () => res(null); });
-    } catch (e) { console.error('IndexedDB load error:', e); return null; }
+        return new Promise(res => { const req = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get("st"); req.onsuccess = () => res(req.result || null); req.onerror = () => res(null); });
+    } catch (e) { return null; }
 }
 
 async function emergencyResetHang() {
@@ -2102,123 +2017,62 @@ function getCurrentISOWeek() { const d = new Date(), dt = new Date(Date.UTC(d.ge
 
 window.addEventListener('DOMContentLoaded', async () => {
     if (el('headerDateText')) el('headerDateText').textContent = getTodayFormatted();
-    const svd = await loadFromIndexedDB();
-    if (svd?.settings) sanitizeDeep(svd.settings);
+    const emb = window.INITIAL_APP_STATE || {}, svd = await loadFromIndexedDB();
     if (svd?.settings) appSettings = { ...appSettings, ...svd.settings };
+    else if (emb?.settings) appSettings = { ...appSettings, ...emb.settings };
 
+    ensureUsersListInitialized();
     const savedLocalTheme = localStorage.getItem('company400_theme');
     if (savedLocalTheme && !svd?.settings?.theme) appSettings.theme = savedLocalTheme;
     if (svd && svd.labelsLocked !== undefined) isLabelsLocked = svd.labelsLocked;
     if (svd && svd.customLabels) customLabelsMap = svd.customLabels;
-    if (svd && svd.tombstones && typeof svd.tombstones === 'object') tombstones = svd.tombstones;
     applyThemeUI(); setupEditableLabelsSystem();
 
     try {
-        const res = await fetch(DEFAULT_CLOUD_WEBHOOK_URL + "?t=" + Date.now());
-        const info = await res.json();
-        if (Array.isArray(info?.usernames) && el('loginUsersDatalist')) {
-            el('loginUsersDatalist').innerHTML = info.usernames.map(n => `<option value="${escAttr(n)}">`).join('');
+        const res = await fetch(DEFAULT_CLOUD_WEBHOOK_URL);
+        const cloudData = await res.json();
+        if (cloudData?.settings?.usersList && Array.isArray(cloudData.settings.usersList)) {
+            appSettings.usersList = cloudData.settings.usersList;
+            ensureUsersListInitialized();
         }
     } catch (e) {}
 });
 
-// ===== [التعديل 2] تسجيل الدخول وتحديث الرابط وإصدار القاعدة =====
-function promptUpdateCloudUrlFromLogin() {
-    const cur = (localStorage.getItem('company400_cloud_url') || DEFAULT_CLOUD_WEBHOOK_URL || '').trim();
-    const nextUrl = prompt("الصق رابط Google Apps Script الجديد (ينتهي بـ /exec):", cur);
-    if (nextUrl && nextUrl.trim().startsWith("https://")) {
-        const cleanUrl = nextUrl.trim();
-        appSettings.cloudWebhookUrl = cleanUrl;
-        localStorage.setItem('company400_cloud_url', cleanUrl);
-        showPasteToast("تم تحديث رابط السحابة ✓", "جرب تسجيل الدخول الآن");
-    }
-}
-
 async function verifyPassword() {
     const unameInput = (el('loginUsernameInput')?.value || '').trim();
     const pwInput = nd((el('passwordInput')?.value || '').trim());
-    const savedCustomUrl = (localStorage.getItem('company400_cloud_url') || '').trim();
-    const url = (savedCustomUrl || DEFAULT_CLOUD_WEBHOOK_URL || '').trim();
+    ensureUsersListInitialized();
 
-    if (Date.now() < loginLockUntil) {
-        const e0 = el('passwordError');
-        if (e0) { e0.textContent = `محاولات كثيرة خاطئة — انتظر ${Math.ceil((loginLockUntil - Date.now()) / 1000)} ثانية`; e0.classList.remove('hidden'); }
+    let matchedUser = null;
+    if (unameInput) {
+        matchedUser = appSettings.usersList.find(u => nw(u.name) === nw(unameInput) && nd(u.password) === pwInput);
+    }
+    if (!matchedUser && !unameInput) {
+        matchedUser = appSettings.usersList.find(u => nd(u.password) === pwInput);
+    }
+
+    if (!matchedUser) {
+        if (el('passwordError')) el('passwordError').classList.remove('hidden');
         return;
     }
 
-    const btn = document.querySelector('#passwordModal button[onclick="verifyPassword()"]');
-    if (btn) { btn.disabled = true; btn.textContent = "جاري التحقق..."; }
-
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 25000);
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: "LOGIN", username: unameInput, password: pwInput }),
-            signal: ctrl.signal
-        });
-        const rawText = await res.text();
-        let result;
-        try {
-            result = JSON.parse(rawText);
-        } catch (parseErr) {
-            throw new Error(rawText.includes('<html')
-                ? "الخادم أعاد صفحة HTML — تأكد من نشر السكربت بصلاحية (Anyone / أي شخص) و (Execute as: Me)."
-                : "استجابة غير صالحة من السكربت.");
-        }
-
-        if (!result.ok || !result.user || !result.token) {
-            loginFails++;
-            const e1 = el('passwordError');
-            if (loginFails >= 5) { loginLockUntil = Date.now() + 30000; loginFails = 0; if (e1) e1.textContent = 'محاولات كثيرة خاطئة — انتظر 30 ثانية'; }
-            else if (e1) e1.textContent = result.error || 'اسم المستخدم أو رمز الدخول غير صحيح!';
-            if (e1) e1.classList.remove('hidden');
-            return;
-        }
-
-        loginFails = 0;
-        sessionToken = result.token;
-        currentUser = result.user;
-        appSettings.cloudWebhookUrl = url;
-        localStorage.setItem('company400_cloud_url', url);
-
-        hide('passwordModal');
-        if (el('passwordError')) el('passwordError').classList.add('hidden');
-        el('passwordInput').blur();
-        await initApp();
-        if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
-            captureEmployeeLastSeenLocation(currentUser);
-        }
-    } catch (err) {
-        console.error("Login error:", err);
-        // السماح للمدير بالدخول المحلي الاحتياطي إذا انقطع الاتصال بالسحابة
-        if (pwInput === "0-400" && confirm("تعذر الاتصال بالسحابة:\n" + (err?.message || err) + "\n\nهل تريد فتح المنظومة بالوضع المحلي للمدير الآن؟")) {
-            sessionToken = "OFFLINE_LOCAL_ADMIN";
-            currentUser = JSON.parse(JSON.stringify(DEFAULT_USERS_LIST[0]));
-            hide('passwordModal');
-            if (el('passwordError')) el('passwordError').classList.add('hidden');
-            await initApp();
-            setCloudStatusPill("وضع محلي (غير متصل)", "text-amber-600");
-            return;
-        }
-        alert("تعذر الاتصال بالسحابة:\n" + (err?.message || err));
-    } finally {
-        clearTimeout(timer);
-        if (btn) { btn.disabled = false; btn.textContent = "تسجيل الدخول"; }
+    currentUser = matchedUser;
+    hide('passwordModal');
+    if (el('passwordError')) el('passwordError').classList.add('hidden');
+    el('passwordInput').blur();
+    await initApp();
+    if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
+        captureEmployeeLastSeenLocation(currentUser);
     }
 }
 
 async function initApp() {
     const emb = window.INITIAL_APP_STATE || {}, svd = await loadFromIndexedDB();
-    if (svd?.settings) sanitizeDeep(svd.settings); if (emb?.settings) sanitizeDeep(emb.settings);
     let st = svd;
     if (emb && emb.catalogList && emb.catalogList.length > 0 && (!svd || !svd.dbVersion || emb.dbVersion > svd.dbVersion)) st = emb;
     else if (!svd) st = emb;
 
     if (st) {
-        sanitizeDeep(st);
         currentDbVersion = st.dbVersion || 51;
         if (st.labelsLocked !== undefined) isLabelsLocked = st.labelsLocked;
         if (st.customLabels) customLabelsMap = st.customLabels;
@@ -2232,33 +2086,22 @@ async function initApp() {
         if (st.settings) {
             const preservedUsers = appSettings.usersList;
             appSettings = { ...appSettings, ...st.settings };
-            if (Array.isArray(preservedUsers) && preservedUsers.length > 0) appSettings.usersList = preservedUsers;
-            delete appSettings.password;
+            if (!Array.isArray(appSettings.usersList) || appSettings.usersList.length === 0) appSettings.usersList = preservedUsers;
         }
         const lg = st.logo || localStorage.getItem('company400_logo');
         if (lg && el('logoImg')) { el('logoImg').src = lg; el('logoImg').classList.remove('hidden'); if (el('logoPlaceholder')) el('logoPlaceholder').classList.add('hidden'); }
     }
     orderData.forEach(o => { o.manualAdjust = 0; });
     catalogList = catalogList.map(item => nCat(item));
-    if (st && st.tombstones && typeof st.tombstones === 'object') tombstones = st.tombstones;
-    if (st && st._syncMeta) {
-        lastSyncedCatalogSig = st._syncMeta.catalogSig || '';
-        lastCloudDbVersion = Number(st._syncMeta.cloudVer) || 0;
-        lastCloudCatalogVer = Number(st._syncMeta.catalogVer) || 0;
-    }
-    if (!lastSyncedCatalogSig) lastSyncedCatalogSig = catalogSig();
-    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
-    if (currentUser && !currentUser.isAdmin) {
+  if (currentUser && !currentUser.isAdmin) {
         orderData = [];
         palmData = [];
         activeEditingArchiveId = null;
         currentSessionSwapLog = [];
     }
     if (el('pasteBehaviorSelect')) el('pasteBehaviorSelect').value = appSettings.pasteMode || 'append';
-    appSettings.cloudWebhookUrl = DEFAULT_CLOUD_WEBHOOK_URL.trim();
-    localStorage.setItem('company400_cloud_url', appSettings.cloudWebhookUrl);
+    appSettings.cloudWebhookUrl = (appSettings.cloudWebhookUrl || localStorage.getItem('company400_cloud_url') || DEFAULT_CLOUD_WEBHOOK_URL).trim();
     if (el('cloudBackupUrlInput')) el('cloudBackupUrlInput').value = appSettings.cloudWebhookUrl;
-    if (el('cloudTokenInput')) el('cloudTokenInput').value = getCloudToken();
 
     ensureUsersListInitialized();
     applyRolePermissionsUI();
@@ -2267,22 +2110,15 @@ async function initApp() {
     populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); recalculateAndRender(false);
 
     if (currentUser?.isAdmin) await checkSavedDiskHandleOnStartup();
-    await restoreFromExternalCloud(true, { loadWorking: true });
+    await restoreFromExternalCloud(true);
 }
 
-let _saveTimer = null, _pendingCloudTrigger = false;
 function saveAppState(triggerCloud = true) {
     if (el('pasteBehaviorSelect')) appSettings.pasteMode = el('pasteBehaviorSelect').value;
-    _pendingCloudTrigger = _pendingCloudTrigger || triggerCloud;
-    if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(flushAppState, 400);
-}
-function flushAppState() {
-    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
-    const trig = _pendingCloudTrigger; _pendingCloudTrigger = false;
-    saveToIndexedDB(getFullDatabasePayload(false));
+    const st = getFullDatabasePayload(false);
+    saveToIndexedDB(st);
     if (currentUser?.isAdmin) triggerAutoExternalDiskSave();
-    if (trig && currentUser?.isAdmin) triggerAutoCloudSave();
+    if (triggerCloud && currentUser?.isAdmin) triggerAutoCloudSave();
 }
 
 let toastTimer = null;
@@ -2323,7 +2159,7 @@ function confirmManualPasteModal() {
     if (!txt.trim()) { alert("الرجاء لصق البيانات أولاً!"); return; }
     const st = ingestBulkLines(txt.split(/\r?\n/), currentManualPasteMode, el('pasteBehaviorSelect').value === 'replace');
     hide('manualPasteModal');
-    showPasteToast("تم الإدراج بنجاح", `تمت معالجة ${st.added} سطر (موجود مسبقاً: ${st.updated}) مع إهمال العمود الثالث`);
+    showPasteToast("تم الإدراج بنجاح", `تمت معالجة ${st.added} سطر مع إهمال العمود الثالث`);
 }
 
 // ================= 8. رادار "كسر السيري" للمقاسات =================
@@ -2396,9 +2232,9 @@ function renderSizeRunRadarModal(filterMode) {
             if (sz.req > 0 && sz.scn === 0) { chipCls = 'bg-rose-100 border-rose-400 text-rose-900 ring-1 ring-rose-300'; icon = '✕ مفقود'; }
             else if (sz.scn < sz.req) { chipCls = 'bg-amber-50 border-amber-300 text-amber-900'; icon = `ناقص ${sz.req - sz.scn}`; }
             else if (sz.scn > sz.req) { chipCls = 'bg-sky-50 border-sky-300 text-sky-900'; icon = `+${sz.scn - sz.req}`; }
-            return `<div class="border rounded-xl px-3 py-1.5 text-center min-w-[74px] ${chipCls}"><div class="font-mono font-black text-xs">${esc(sz.size)}</div><div class="text-[10.5px] font-bold mt-0.5">${esc(sz.scn)} / ${esc(sz.req)}</div><div class="text-[9.5px] font-black opacity-85">${icon}</div></div>`;
+            return `<div class="border rounded-xl px-3 py-1.5 text-center min-w-[74px] ${chipCls}"><div class="font-mono font-black text-xs">${sz.size}</div><div class="text-[10.5px] font-bold mt-0.5">${sz.scn} / ${sz.req}</div><div class="text-[9.5px] font-black opacity-85">${icon}</div></div>`;
         }).join('');
-        return `<div class="border rounded-2xl p-4 shadow-sm space-y-3 ${cardStyle}"><div class="flex flex-wrap justify-between items-center gap-2"><div class="flex items-center gap-2"><button type="button" onclick="closeUnifiedToolsModal();filterMainTableByStory('${escAttr(st.storyDisplay)}')" class="font-mono font-black text-sm text-indigo-700 hover:underline">قصة ${esc(st.storyDisplay)}</button><span class="font-bold text-xs text-slate-800">• ${esc(st.name)}</span><span class="text-[11px] text-slate-500 font-semibold">(المسحوب ${esc(st.totalScn)} من ${esc(st.totalReq)})</span></div><span class="text-[11px] font-black px-3 py-0.5 rounded-full ${badgeStyle}">${esc(st.statusLabel)}</span></div><div class="flex flex-wrap gap-2">${sizesChips}</div></div>`;
+        return `<div class="border rounded-2xl p-4 shadow-sm space-y-3 ${cardStyle}"><div class="flex flex-wrap justify-between items-center gap-2"><div class="flex items-center gap-2"><button type="button" onclick="closeUnifiedToolsModal();filterMainTableByStory('${escAttr(st.storyDisplay)}')" class="font-mono font-black text-sm text-indigo-700 hover:underline">قصة ${st.storyDisplay}</button><span class="font-bold text-xs text-slate-800">• ${st.name}</span><span class="text-[11px] text-slate-500 font-semibold">(المسحوب ${st.totalScn} من ${st.totalReq})</span></div><span class="text-[11px] font-black px-3 py-0.5 rounded-full ${badgeStyle}">${st.statusLabel}</span></div><div class="flex flex-wrap gap-2">${sizesChips}</div></div>`;
     }).join('');
 }
 
@@ -2408,7 +2244,7 @@ function buildWhatsAppReportFromDataset(hallTitle, dateStr, engineResult, prepar
     const incShort = el('waOptIncludeShortages')?.checked !== false, incBroken = el('waOptIncludeBrokenRuns')?.checked !== false, incWrong = el('waOptIncludeWrong')?.checked !== false;
     const lines = [`*تقرير التشييك والمطابقة  — ${hallTitle}*`, `▪ التاريخ: ${dateStr}${preparerName ? ` | المحضّر: *${preparerName}*` : ''}`, `──────────────────`, `▪ إجمالي المطلوب: *${k.tRP}* قطعة (${k.tOI} صنف)`, `▪ إجمالي المسحوب الفعلي: *${k.tSP}* قطعة`, `▪ نسبة المطابقة: *${k.mP}%* (${k.mC} صنف سليم)`, `▪ ملخص الفروقات: نقص (*${k.sS}*) | زيادة (*${k.oS}*) | خاطئ (*${k.wQT}*)`];
     if (incBroken) { const brokenRuns = computeSizeRunRadarListFromRows(mR).filter(s => s.status === 'BROKEN'); if (brokenRuns.length > 0) { lines.push(``, `⚠️ *تنبيهات كسر السيري (${brokenRuns.length} قصة):*`); brokenRuns.slice(0, 8).forEach(b => lines.push(`- قصة *${b.storyDisplay}* (${b.name}): ناقص مقاس [${b.missingSizes.map(x => x.size).join('، ')}]`)); } }
-    if (incShort) { const shortages = mR.filter(r => r.diff < 0).sort((a, b) => a.diff - b.diff); if (shortages.length > 0) { lines.push(``, `🔻 *أهم النواقص غير المعوّضة (${esc(shortages.length)} صنف):*`); shortages.slice(0, 10).forEach(s => lines.push(`- ${esc(s.name)} (قصة ${esc(s.sp?.stN || '-')} | ${esc(s.sp?.cName || '-')} | مقاس ${esc(s.sp?.szV || '-')}): ناقص *${Math.abs(s.diff)}*`)); if (shortages.length > 10) lines.push(`... وعدد (${shortages.length - 10}) أصناف أخرى.`); } }
+    if (incShort) { const shortages = mR.filter(r => r.diff < 0).sort((a, b) => a.diff - b.diff); if (shortages.length > 0) { lines.push(``, `🔻 *أهم النواقص غير المعوّضة (${shortages.length} صنف):*`); shortages.slice(0, 10).forEach(s => lines.push(`- ${s.name} (قصة ${s.sp?.stN || '-'} | ${s.sp?.cName || '-'} | مقاس ${s.sp?.szV || '-'}): ناقص *${Math.abs(s.diff)}*`)); if (shortages.length > 10) lines.push(`... وعدد (${shortages.length - 10}) أصناف أخرى.`); } }
     if (incWrong && wI.length > 0) { lines.push(``, `❌ *أكواد مسحوبة غير مطلوبة (${wI.length} كود / ${k.wQT} قطعة):*`); wI.slice(0, 8).forEach(w => lines.push(`- ${w.raw} (${w.name}): عدد *${w.qty}*`)); }
     lines.push(`──────────────────`, `✅ *صافي القطع الجاهزة للتسليم: ${k.tSP} قطعة*`);
     return lines.join('\n');
@@ -2431,8 +2267,8 @@ function ensureWhatsAppSourceSelectorUI() {
     const sel = el('waSourceReportSelect');
     if (sel) {
         const curHall = (el('orderRefTitle')?.innerText || 'طلبية').trim(), curCount = (orderData.length > 0 || palmData.length > 0) ? `(${orderData.length} صنف)` : '(فارغ حالياً)';
-        let opts = `<option value="CURRENT">التشييك الحالي على الشاشة — ${esc(curHall)} ${curCount}</option>`;
-        if (currentUser?.isAdmin) archiveList.forEach(a => { opts += `<option value="${escAttr(a.id)}">أرشيف: ${esc(a.hallName)} — أسبوع ${esc(a.weekNum)} (${esc(a.date)})</option>`; });
+        let opts = `<option value="CURRENT">التشييك الحالي على الشاشة — ${curHall} ${curCount}</option>`;
+        if (currentUser?.isAdmin) archiveList.forEach(a => { opts += `<option value="${escAttr(a.id)}">أرشيف: ${a.hallName} — أسبوع ${a.weekNum} (${a.date})</option>`; });
         sel.innerHTML = opts;
         sel.value = (orderData.length === 0 && palmData.length === 0 && archiveList.length > 0 && currentUser?.isAdmin) ? archiveList[0].id : 'CURRENT';
     }
@@ -2450,7 +2286,7 @@ const DMAP = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5',
 function nd(s) { let r = ""; for (let c of String(s || '')) r += DMAP[c] !== undefined ? DMAP[c] : c; return r; }
 function nw(s) { if (!s || s === "-") return ""; return nd(String(s).trim()).replace(/[\u064B-\u065F\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').toUpperCase(); }
 function fsc(r) { if (!r) return ""; let s = String(r).trim(); if (/\s/.test(s) && /[\u0600-\u06FF]/.test(s)) return nc(s); let c = ""; for (let x of s) c += AMAP[x] !== undefined ? AMAP[x] : x; if (c.endsWith(".0")) c = c.slice(0, -2); return c.toUpperCase(); }
-function nc(r) { if (r === null || r === undefined) return ""; let s = nd(String(r).trim()); if (s.endsWith(".0")) s = s.slice(0, -2); return s.replace(/[<>]/g, '').replace(/\s+/g, ' ').toUpperCase(); }
+function nc(r) { if (r === null || r === undefined) return ""; let s = nd(String(r).trim()); if (s.endsWith(".0")) s = s.slice(0, -2); return s.replace(/\s+/g, ' ').toUpperCase(); }
 function isB(c) { const x = nc(c).replace(/[\s\-_]/g, ''); return x.length >= 11 && /^[A-Z0-9]+$/.test(x) && !/[\u0600-\u06FF]/.test(x); }
 function extT(r) { const c = nc(r); if (!c) return []; return c.replace(/(\d+)([\u0600-\u06FF]+)/g, '$1 $2').replace(/([\u0600-\u06FF]+)(\d+)/g, '$1 $2').split(/[\s\-_\/\\|,.;:+*()"'[\]{}]+/).filter(Boolean); }
 function nl2s(sz) { const s = nw(sz).replace(/[\s\-_]/g, ''); if (!s || s === "-") return ""; if (/^[SML]$/.test(s)) return '0' + s; if (/^0[1-9]X$/.test(s)) return s.slice(1); return s; }
@@ -2514,11 +2350,10 @@ function nCat(r) {
     if (!n || n === "-") n = (st && st !== "-") ? st : "-";
     let rawSea = nc(r.season || "-") || "-"; const barSea = eSC(c);
     if (barSea && rawSea.length < 2) rawSea = barSea;
-    return { code: c, name: cleanText(n), story: st, size: nc(r.size || "-") || "-", color: cleanText((r.color || "-").trim()) || "-", colorNum: nc(r.colorNum || "-") || "-", mold: nc(r.mold || "-") || "-", drop: nc(r.drop || "-") || "-", material: cleanText((r.material || "-").trim()) || "-", season: rawSea };
+    return { code: c, name: n, story: st, size: nc(r.size || "-") || "-", color: (r.color || "-").trim() || "-", colorNum: nc(r.colorNum || "-") || "-", mold: nc(r.mold || "-") || "-", drop: nc(r.drop || "-") || "-", material: (r.material || "-").trim() || "-", season: rawSea };
 }
 
 function rebuildLookups() {
-    _bciCache.clear();
     catByExactCodeMap.clear(); catByNoSeasonKeyMap.clear(); catByStoryMap.clear(); catBySweaterWrittenColorKeyMap.clear(); knownWrittenColorsSet.clear();
     validCatalogColorNumsSet.clear(); validCatalogSizesSet.clear(); storyValidColorsMap.clear(); storyColorNameToNumsMap.clear(); globalColorNumToNameMap.clear(); globalColorNameToNumsMap.clear();
     shortCodeToMainsMap.clear(); mainCodeToShortMap.clear(); shortCodeToNameMap.clear();
@@ -2591,12 +2426,6 @@ function autoGenerateShortcutsFromCatalog() {
 }
 
 function bCI(rI) {
-    const key = nc(rI);
-    let v = _bciCache.get(key);
-    if (v === undefined) { v = _bCIcompute(rI); if (_bciCache.size > 6000) _bciCache.clear(); _bciCache.set(key, v); }
-    return v;
-}
-function _bCIcompute(rI) {
     const c = nc(rI), sNK = nw(c) || c, nsK = gNSK(c), sC = eSC(c), pS = pWCST(c);
     let cI = null, aS = null, sK = null, pM = c, mVP = "-";
 
@@ -2801,9 +2630,9 @@ function renderStoryRollupModal(filterMode) {
     let rowsHtml = '';
     filtered.forEach((st, idx) => {
         const savedEdit = customStoryRollupEdits[st.storyKey] || {};
-        let defSt = st.netDiff === 0 && !st.hasInternalSwap ? 'مطابقة 100% ✓' : (st.hasInternalSwap ? 'متوازنة (تبديل مقاس/لون)' : (st.netDiff < 0 ? `نقص صافي (${esc(st.netDiff)})` : `زيادة صافية (+${esc(st.netDiff)})`));
+        let defSt = st.netDiff === 0 && !st.hasInternalSwap ? 'مطابقة 100% ✓' : (st.hasInternalSwap ? 'متوازنة (تبديل مقاس/لون)' : (st.netDiff < 0 ? `نقص صافي (${st.netDiff})` : `زيادة صافية (+${st.netDiff})`));
         let bdg = st.netDiff === 0 && !st.hasInternalSwap ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (st.hasInternalSwap ? 'bg-teal-50 text-teal-800 border-teal-200' : (st.netDiff < 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-800 border-amber-200'));
-        rowsHtml += `<tr class="border-b hover:bg-slate-50"><td class="p-2.5 text-center font-bold text-slate-400">${idx + 1}</td><td onclick="filterMainTableByStory('${escAttr(st.storyDisplay)}')" class="p-2.5 text-center font-mono font-black text-indigo-600 cursor-pointer underline">${esc(st.storyDisplay)}</td><td contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','name',this.innerText)" class="p-2.5 font-bold">${esc(savedEdit.name ?? st.name)}</td><td class="p-2.5 text-center font-black">${esc(st.reqQty)}</td><td class="p-2.5 text-center text-blue-700 font-bold">${esc(st.matchedScanQty)}</td><td class="p-2.5 text-center text-rose-600 font-bold">${esc(st.wrongScanQty)}</td><td class="p-2.5 text-center font-black">${esc(st.totalScanQty)}</td><td class="p-2.5 text-center font-black ${st.netDiff === 0 ? 'text-emerald-600' : (st.netDiff < 0 ? 'text-rose-600' : 'text-amber-600')}" dir="ltr">${st.netDiff > 0 ? '+' + st.netDiff : st.netDiff}</td><td class="p-2.5"><div contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','status',this.innerText)" class="text-center px-2.5 py-1 rounded-lg text-[11px] font-bold border ${bdg}">${esc(savedEdit.status ?? defSt)}</div>${st.details.length > 0 ? `<div contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','details',this.innerText)" class="text-[10.5px] text-slate-500 text-center mt-1 whitespace-pre-line">${esc(savedEdit.details ?? st.details.join('\n'))}</div>` : ''}</td></tr>`;
+        rowsHtml += `<tr class="border-b hover:bg-slate-50"><td class="p-2.5 text-center font-bold text-slate-400">${idx + 1}</td><td onclick="filterMainTableByStory('${escAttr(st.storyDisplay)}')" class="p-2.5 text-center font-mono font-black text-indigo-600 cursor-pointer underline">${st.storyDisplay}</td><td contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','name',this.innerText)" class="p-2.5 font-bold">${savedEdit.name ?? st.name}</td><td class="p-2.5 text-center font-black">${st.reqQty}</td><td class="p-2.5 text-center text-blue-700 font-bold">${st.matchedScanQty}</td><td class="p-2.5 text-center text-rose-600 font-bold">${st.wrongScanQty}</td><td class="p-2.5 text-center font-black">${st.totalScanQty}</td><td class="p-2.5 text-center font-black ${st.netDiff === 0 ? 'text-emerald-600' : (st.netDiff < 0 ? 'text-rose-600' : 'text-amber-600')}" dir="ltr">${st.netDiff > 0 ? '+' + st.netDiff : st.netDiff}</td><td class="p-2.5"><div contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','status',this.innerText)" class="text-center px-2.5 py-1 rounded-lg text-[11px] font-bold border ${bdg}">${savedEdit.status ?? defSt}</div>${st.details.length > 0 ? `<div contenteditable="${canEdit}" onblur="saveStoryRollupCustomEdit('${escAttr(st.storyKey)}','details',this.innerText)" class="text-[10.5px] text-slate-500 text-center mt-1 whitespace-pre-line">${savedEdit.details ?? st.details.join('\n')}</div>` : ''}</td></tr>`;
     });
     bd.innerHTML = `<div class="border border-slate-200 rounded-xl overflow-hidden bg-white"><table class="pro-table w-full"><thead><tr><th class="w-10 text-center">#</th><th class="w-20 text-center">القصة</th><th>اسم الصنف</th><th class="w-16 text-center">المطلوب</th><th class="w-16 text-center">مطابق</th><th class="w-16 text-center">خاطئ</th><th class="w-16 text-center">الإجمالي</th><th class="w-16 text-center">الفرق</th><th class="w-60 text-center">الحالة والتفاصيل</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
@@ -2921,10 +2750,10 @@ function renderRuleStageTable() {
         const isApp = item.decision === 'APPROVED', isRej = item.decision === 'REJECTED';
         return `<tr class="border-b ${isApp ? 'bg-emerald-50/70' : (isRej ? 'bg-rose-50/40 opacity-60' : 'bg-white')}">
             <td class="p-2.5 text-center font-bold text-slate-400">${idx + 1}</td>
-            <td class="p-2.5"><div class="flex justify-between"><span class="font-mono font-black text-xs text-rose-700">${esc(item.oC)}</span><span class="bg-rose-50 text-rose-700 text-[10px] font-bold px-2 rounded">ناقص: ${esc(item.reqMissingQty)}</span></div><div class="text-[11px] font-bold mt-0.5">${esc(item.oN)}</div><div class="text-[10.5px] text-slate-500">قصة: ${esc(item.oStory)} | ${esc(item.oColor)} | مقاس: <b>${esc(item.oSize)}</b></div></td>
-            <td class="p-2.5"><div class="flex justify-between"><span class="font-mono font-black text-xs text-slate-800">${esc(item.sC)}</span><span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 rounded">مسحوب: ${esc(item.scannedQty)}</span></div><div class="text-[11px] font-bold mt-0.5">${esc(item.sN)}</div><div class="text-[10.5px] text-slate-500">قصة: ${esc(item.sStory)} ✓ | ${esc(item.sColor)} | مقاس: <b>${esc(item.sSize)}</b></div></td>
-            <td class="p-2.5 text-center"><span class="inline-block border px-2 py-1 rounded-lg text-[11px] font-bold ${esc(item.badgeClass)}">${esc(item.statusLabel)}</span></td>
-            <td class="p-2.5 text-center"><div class="flex flex-col items-center gap-1"><div class="inline-flex rounded-lg overflow-hidden border border-slate-300"><button type="button" onclick="setRuleStageRowDecision(${esc(item.id)},'APPROVED')" class="px-2.5 py-1 text-xs font-bold ${isApp ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700'}">موافقة</button><button type="button" onclick="setRuleStageRowDecision(${esc(item.id)},'REJECTED')" class="px-2.5 py-1 text-xs font-bold ${isRej ? 'bg-rose-600 text-white' : 'bg-white text-rose-600'}">رفض</button></div><button type="button" onclick="executeSingleRuleRowImmediately(${esc(item.id)})" class="text-[10px] font-bold text-teal-700 underline">تنفيذ فوري</button></div></td>
+            <td class="p-2.5"><div class="flex justify-between"><span class="font-mono font-black text-xs text-rose-700">${item.oC}</span><span class="bg-rose-50 text-rose-700 text-[10px] font-bold px-2 rounded">ناقص: ${item.reqMissingQty}</span></div><div class="text-[11px] font-bold mt-0.5">${item.oN}</div><div class="text-[10.5px] text-slate-500">قصة: ${item.oStory} | ${item.oColor} | مقاس: <b>${item.oSize}</b></div></td>
+            <td class="p-2.5"><div class="flex justify-between"><span class="font-mono font-black text-xs text-slate-800">${item.sC}</span><span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 rounded">مسحوب: ${item.scannedQty}</span></div><div class="text-[11px] font-bold mt-0.5">${item.sN}</div><div class="text-[10.5px] text-slate-500">قصة: ${item.sStory} ✓ | ${item.sColor} | مقاس: <b>${item.sSize}</b></div></td>
+            <td class="p-2.5 text-center"><span class="inline-block border px-2 py-1 rounded-lg text-[11px] font-bold ${item.badgeClass}">${item.statusLabel}</span></td>
+            <td class="p-2.5 text-center"><div class="flex flex-col items-center gap-1"><div class="inline-flex rounded-lg overflow-hidden border border-slate-300"><button type="button" onclick="setRuleStageRowDecision(${item.id},'APPROVED')" class="px-2.5 py-1 text-xs font-bold ${isApp ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700'}">موافقة</button><button type="button" onclick="setRuleStageRowDecision(${item.id},'REJECTED')" class="px-2.5 py-1 text-xs font-bold ${isRej ? 'bg-rose-600 text-white' : 'bg-white text-rose-600'}">رفض</button></div><button type="button" onclick="executeSingleRuleRowImmediately(${item.id})" class="text-[10px] font-bold text-teal-700 underline">تنفيذ فوري</button></div></td>
         </tr>`;
     }).join('');
     bd.innerHTML = `<div class="flex justify-between items-center mb-2"><div class="flex gap-2"><button type="button" onclick="setAllRuleStageDecisions('APPROVED')" class="btn-soft !text-emerald-700">موافقة الكل</button><button type="button" onclick="setAllRuleStageDecisions('REJECTED')" class="btn-soft !text-rose-600">رفض الكل</button></div><div class="text-xs font-bold text-slate-600">موافق: ${approvedCount} | مرفوض: ${rejectedCount}</div></div><div class="border border-slate-200 rounded-xl overflow-hidden bg-white"><table class="pro-table w-full"><thead><tr><th class="w-10 text-center">#</th><th>الناقص بالطلبية</th><th>البديل الخاطئ</th><th class="w-48 text-center">بيان المطابقة</th><th class="w-32 text-center">القرار</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
@@ -2952,9 +2781,9 @@ function openStatusDetailsModal(idx) {
     if (!lastCalculatedSummary) recalculateAndRender(false);
     const res = lastCalculatedSummary.mR.find(r => r.idx === idx); if (!res) return;
     currentModalOrderIdx = idx; const bd = el('statusModalBody'), diff = res.diff, isAdmin = Boolean(currentUser?.isAdmin);
-    let bH = diff < 0 ? `<div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800 font-bold">المطلوب (${esc(res.req)}) | المسحوب (${esc(res.scn)}) | الناقص (${Math.abs(diff)})</div>` : (diff > 0 ? `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 font-bold">المطلوب (${esc(res.req)}) | المسحوب (${esc(res.scn)}) | الزيادة (+${diff})</div>` : `<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-bold">مطابق تماماً ✓</div>`);
-    let sH = (res.mDL && res.mDL.length > 0) ? res.mDL.map((d, i) => `<tr class="border-b"><td class="p-2 text-center">${i + 1}</td><td class="p-2 font-mono text-xs">${esc(d.pC)}${(isAdmin && d.origC) ? `<div class="text-[10px] text-purple-700">محول من: ${esc(d.origC)}</div>` : ''}</td><td class="p-2 text-[11px]">${esc(d.sT)}</td><td class="p-2 text-[10.5px]">${esc(d.pL)}</td><td class="p-2 text-center font-black">${esc(d.tQ)}</td><td class="p-2 text-center">${(isAdmin && d.origC) ? `<button type="button" onclick="revertConvertedPalmEntry('${escAttr(res.oC)}','${escAttr(d.origC)}',${esc(res.idx)})" class="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">إلغاء</button>` : '-'}</td></tr>`).join('') : `<tr><td colspan="6" class="p-4 text-center text-rose-600 font-bold">لم يتم السحب بعد.</td></tr>`;
-    bd.innerHTML = `${bH}<div class="bg-slate-50 rounded-xl p-3 grid grid-cols-2 text-xs border border-slate-200"><div><b>الكود:</b> <span class="font-mono">${esc(res.oC)}</span></div><div><b>الاسم:</b> ${esc(res.name)}</div></div><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="pro-table w-full"><thead><tr><th class="w-8 text-center">#</th><th>المسحوب</th><th>المواصفات</th><th>المطابقة</th><th class="w-14 text-center">الكمية</th><th class="w-16 text-center">إجراء</th></tr></thead><tbody>${sH}</tbody></table></div><div class="bg-slate-50 border border-slate-200 rounded-xl p-3"><label class="block text-[11px] font-bold mb-1">ملاحظة:</label><textarea id="modalOrderRowNoteInput" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">${isAdmin ? esc(res.note || '') : ''}</textarea></div>`;
+    let bH = diff < 0 ? `<div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800 font-bold">المطلوب (${res.req}) | المسحوب (${res.scn}) | الناقص (${Math.abs(diff)})</div>` : (diff > 0 ? `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 font-bold">المطلوب (${res.req}) | المسحوب (${res.scn}) | الزيادة (+${diff})</div>` : `<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-bold">مطابق تماماً ✓</div>`);
+    let sH = (res.mDL && res.mDL.length > 0) ? res.mDL.map((d, i) => `<tr class="border-b"><td class="p-2 text-center">${i + 1}</td><td class="p-2 font-mono text-xs">${d.pC}${(isAdmin && d.origC) ? `<div class="text-[10px] text-purple-700">محول من: ${d.origC}</div>` : ''}</td><td class="p-2 text-[11px]">${d.sT}</td><td class="p-2 text-[10.5px]">${d.pL}</td><td class="p-2 text-center font-black">${d.tQ}</td><td class="p-2 text-center">${(isAdmin && d.origC) ? `<button type="button" onclick="revertConvertedPalmEntry('${escAttr(res.oC)}','${escAttr(d.origC)}',${res.idx})" class="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">إلغاء</button>` : '-'}</td></tr>`).join('') : `<tr><td colspan="6" class="p-4 text-center text-rose-600 font-bold">لم يتم السحب بعد.</td></tr>`;
+    bd.innerHTML = `${bH}<div class="bg-slate-50 rounded-xl p-3 grid grid-cols-2 text-xs border border-slate-200"><div><b>الكود:</b> <span class="font-mono">${res.oC}</span></div><div><b>الاسم:</b> ${res.name}</div></div><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="pro-table w-full"><thead><tr><th class="w-8 text-center">#</th><th>المسحوب</th><th>المواصفات</th><th>المطابقة</th><th class="w-14 text-center">الكمية</th><th class="w-16 text-center">إجراء</th></tr></thead><tbody>${sH}</tbody></table></div><div class="bg-slate-50 border border-slate-200 rounded-xl p-3"><label class="block text-[11px] font-bold mb-1">ملاحظة:</label><textarea id="modalOrderRowNoteInput" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">${isAdmin ? (res.note || '') : ''}</textarea></div>`;
     show('statusDetailsModal');
 }
 function closeStatusDetailsModal() { hide('statusDetailsModal'); currentModalOrderIdx = null; }
@@ -2997,17 +2826,17 @@ function recalculateAndRender(triggerSave = true) {
 
     mR.forEach(r => {
         let rc = '', bH = '';
-        if (r.sT === 'MATCH') { rc = 'row-match'; bH = `<button type="button" onclick="openStatusDetailsModal(${esc(r.idx)})" class="clickable-badge bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-lg text-[10.5px] font-black">مطابق ✓</button>`; }
+        if (r.sT === 'MATCH') { rc = 'row-match'; bH = `<button type="button" onclick="openStatusDetailsModal(${r.idx})" class="clickable-badge bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-lg text-[10.5px] font-black">مطابق ✓</button>`; }
         else if (r.sT === 'SHORTAGE') {
             rc = 'row-shortage';
             bH = r.scn === 0
-                ? `<button type="button" onclick="openStatusDetailsModal(${esc(r.idx)})" class="clickable-badge bg-rose-100 text-rose-800 px-2 py-0.5 rounded-lg text-[10.5px] font-black">غير مسحوب</button>`
-                : `<button type="button" onclick="openStatusDetailsModal(${esc(r.idx)})" class="clickable-badge bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-[10.5px] font-black">نقص (${Math.abs(r.diff)})</button>`;
+                ? `<button type="button" onclick="openStatusDetailsModal(${r.idx})" class="clickable-badge bg-rose-100 text-rose-800 px-2 py-0.5 rounded-lg text-[10.5px] font-black">غير مسحوب</button>`
+                : `<button type="button" onclick="openStatusDetailsModal(${r.idx})" class="clickable-badge bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-[10.5px] font-black">نقص (${Math.abs(r.diff)})</button>`;
             const sw = detectInstantCrossSwapForRow(r, mR, wI);
-            if (sw) bH += `<button type="button" onclick="executeInstantCrossSwap(${esc(r.idx)},'${esc(sw.sourceType)}','${escAttr(sw.sourceCode)}',${sw.sourceOrderIdx},${esc(sw.availQty)},'${escAttr(sw.reason)}')" class="swap-alert-btn mt-1 block w-full bg-teal-600 text-white text-[9.5px] font-bold px-1.5 py-0.5 rounded-lg">${esc(sw.label)}</button>`;
-        } else if (r.sT === 'OVERAGE') { rc = 'row-overage'; bH = `<button type="button" onclick="openStatusDetailsModal(${esc(r.idx)})" class="clickable-badge bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-lg text-[10.5px] font-black">زيادة (+${esc(r.diff)})</button>`; }
+            if (sw) bH += `<button type="button" onclick="executeInstantCrossSwap(${r.idx},'${sw.sourceType}','${escAttr(sw.sourceCode)}',${sw.sourceOrderIdx},${sw.availQty},'${escAttr(sw.reason)}')" class="swap-alert-btn mt-1 block w-full bg-teal-600 text-white text-[9.5px] font-bold px-1.5 py-0.5 rounded-lg">${sw.label}</button>`;
+        } else if (r.sT === 'OVERAGE') { rc = 'row-overage'; bH = `<button type="button" onclick="openStatusDetailsModal(${r.idx})" class="clickable-badge bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-lg text-[10.5px] font-black">زيادة (+${r.diff})</button>`; }
 
-        if (isAdmin && r.note) bH += `<div onclick="openStatusDetailsModal(${esc(r.idx)})" class="text-[10px] bg-amber-50 text-amber-800 font-semibold border border-amber-200 px-1.5 py-0.5 rounded mt-1 cursor-pointer">${esc(r.note)}</div>`;
+        if (isAdmin && r.note) bH += `<div onclick="openStatusDetailsModal(${r.idx})" class="text-[10px] bg-amber-50 text-amber-800 font-semibold border border-amber-200 px-1.5 py-0.5 rounded mt-1 cursor-pointer">${r.note}</div>`;
 
         if (currentFilter === 'MISMATCH' && r.sT === 'MATCH') return;
         if (currentFilter !== 'ALL' && currentFilter !== 'MISMATCH' && currentFilter !== r.sT) return;
@@ -3017,16 +2846,16 @@ function recalculateAndRender(triggerSave = true) {
         const isSel = selectedOrderIndices.has(r.idx);
         const dD = r.diff === 0 ? '0' : (r.diff > 0 ? `+${r.diff}` : `${r.diff}`);
         const dC = r.diff === 0 ? 'text-emerald-600' : (r.diff < 0 ? 'text-red-600' : 'text-amber-600');
-        let cC = `<div contenteditable="${canEditCell}" onblur="updateOrderRow(${esc(r.idx)},'code',this.innerText)" class="font-bold text-[11.5px]">${esc(r.oC)}</div>` + (r.mC && r.mC !== r.oC ? `<div class="text-[10px] text-indigo-600 font-mono">${esc(r.mC)}</div>` : '');
+        let cC = `<div contenteditable="${canEditCell}" onblur="updateOrderRow(${r.idx},'code',this.innerText)" class="font-bold text-[11.5px]">${r.oC}</div>` + (r.mC && r.mC !== r.oC ? `<div class="text-[10px] text-indigo-600 font-mono">${r.mC}</div>` : '');
 
-        oH += `<tr class="${rc}${isSel ? ' row-selected' : ''}"><td class="no-print perm-delete text-center"><input type="checkbox" ${isSel ? 'checked' : ''} onchange="toggleOrderRowSelect(${esc(r.idx)},this.checked,this)" class="w-3.5 h-3.5 accent-indigo-600"></td><td class="text-center text-slate-400 font-semibold">${r.idx + 1}</td><td>${cC}</td><td class="font-bold">${esc(r.name)}</td><td>${formatSpecsBadgesHTML(r.sp)}</td><td class="text-center text-slate-500">${esc(r.mat)}</td><td contenteditable="${canEditCell}" onblur="updateOrderRow(${esc(r.idx)},'reqQty',this.innerText)" class="text-center font-black">${esc(r.req)}</td><td onclick="openStatusDetailsModal(${esc(r.idx)})" class="text-center font-black text-blue-600 cursor-pointer hover:underline">${esc(r.scn)}</td><td onclick="openStatusDetailsModal(${esc(r.idx)})" class="text-center font-black ${dC} cursor-pointer hover:underline" dir="ltr">${dD}</td><td class="text-center">${bH}</td><td class="no-print perm-delete text-center"><button type="button" onclick="deleteOrderRowWithWarning(${esc(r.idx)})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+        oH += `<tr class="${rc}${isSel ? ' row-selected' : ''}"><td class="no-print perm-delete text-center"><input type="checkbox" ${isSel ? 'checked' : ''} onchange="toggleOrderRowSelect(${r.idx},this.checked,this)" class="w-3.5 h-3.5 accent-indigo-600"></td><td class="text-center text-slate-400 font-semibold">${r.idx + 1}</td><td>${cC}</td><td class="font-bold">${r.name}</td><td>${formatSpecsBadgesHTML(r.sp)}</td><td class="text-center text-slate-500">${r.mat}</td><td contenteditable="${canEditCell}" onblur="updateOrderRow(${r.idx},'reqQty',this.innerText)" class="text-center font-black">${r.req}</td><td onclick="openStatusDetailsModal(${r.idx})" class="text-center font-black text-blue-600 cursor-pointer hover:underline">${r.scn}</td><td onclick="openStatusDetailsModal(${r.idx})" class="text-center font-black ${dC} cursor-pointer hover:underline" dir="ltr">${dD}</td><td class="text-center">${bH}</td><td class="no-print perm-delete text-center"><button type="button" onclick="deleteOrderRowWithWarning(${r.idx})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
     });
     tb.innerHTML = oH || `<tr><td colspan="11" class="text-center py-12 text-slate-400 font-semibold">لا توجد أصناف في العرض الحالي — الصق الطلبية أو ارفع ملفاً للبدء</td></tr>`;
 
     const tw = el('wrongCodesTbody');
     tw.innerHTML = wI.length > 0 ? wI.map(w => {
         const isWrgSel = selectedWrongCodes.has(nc(w.raw)), safeRaw = escAttr(w.raw);
-        return `<tr class="row-wrong${isWrgSel ? ' row-selected' : ''}"><td class="no-print perm-delete text-center"><input type="checkbox" ${isWrgSel ? 'checked' : ''} onchange="toggleWrongRowSelect('${safeRaw}',this.checked,this)" class="w-3.5 h-3.5 accent-rose-600"></td><td class="font-bold text-rose-800 text-[11px] font-mono">${esc(w.raw)}</td><td class="font-bold text-[11px]">${esc(w.name)}</td><td>${formatSpecsBadgesHTML(w.sp)}</td><td class="text-center text-[10.5px] text-slate-500">${esc(w.mat)}</td><td class="text-center font-black text-rose-600">${esc(w.qty)}</td><td class="text-center no-print perm-approve-wrong"><button type="button" onclick="addWrongCodeDirectlyToOrder('${safeRaw}',${esc(w.qty)})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] px-1.5 py-0.5 rounded" title="اعتماد للطلبية"><i class="fa-solid fa-plus"></i></button></td></tr>`;
+        return `<tr class="row-wrong${isWrgSel ? ' row-selected' : ''}"><td class="no-print perm-delete text-center"><input type="checkbox" ${isWrgSel ? 'checked' : ''} onchange="toggleWrongRowSelect('${safeRaw}',this.checked,this)" class="w-3.5 h-3.5 accent-rose-600"></td><td class="font-bold text-rose-800 text-[11px] font-mono">${w.raw}</td><td class="font-bold text-[11px]">${w.name}</td><td>${formatSpecsBadgesHTML(w.sp)}</td><td class="text-center text-[10.5px] text-slate-500">${w.mat}</td><td class="text-center font-black text-rose-600">${w.qty}</td><td class="text-center no-print perm-approve-wrong"><button type="button" onclick="addWrongCodeDirectlyToOrder('${safeRaw}',${w.qty})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] px-1.5 py-0.5 rounded" title="اعتماد للطلبية"><i class="fa-solid fa-plus"></i></button></td></tr>`;
     }).join('') : `<tr><td colspan="7" class="text-center py-12 text-emerald-600 font-bold">لا توجد أكواد خاطئة ✓</td></tr>`;
 
     el('kpiTotalItems').textContent = k.tRP; el('kpiTotalReqQty').textContent = `${k.tOI} صنف`;
@@ -3048,7 +2877,7 @@ function recalculateAndRender(triggerSave = true) {
 
 function formatSpecsBadgesHTML(s) {
     if (!s) return `-`;
-    return `<div class="flex flex-wrap gap-1 text-[10px]"><span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded">${esc(s.cD)}</span><span class="bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded">قصة ${esc(s.stN)}</span><span class="bg-sky-50 text-sky-800 px-1.5 py-0.2 rounded font-bold">${esc(s.szV)}</span><span class="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded">${esc(s.sV)}</span></div>`;
+    return `<div class="flex flex-wrap gap-1 text-[10px]"><span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded">${s.cD}</span><span class="bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded">قصة ${s.stN}</span><span class="bg-sky-50 text-sky-800 px-1.5 py-0.2 rounded font-bold">${s.szV}</span><span class="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded">${s.sV}</span></div>`;
 }
 
 function getItemName(c) { return bCI(c).name; }
@@ -3069,7 +2898,7 @@ document.addEventListener('paste', e => {
     if ((md === 'order' || md === 'palm') && !hasPerm('canNewOrder')) return;
     if (!currentUser?.isAdmin && (md === 'catalog' || md === 'shortcuts')) return;
     const st = ingestBulkLines(l, md, el('pasteBehaviorSelect').value === 'replace');
-    showPasteToast("تم اللصق بنجاح", `تمت معالجة ${st.added} سطر (موجود مسبقاً: ${st.updated}) مع إهمال العمود الثالث`);
+    showPasteToast("تم اللصق بنجاح", `تمت معالجة ${st.added} سطر مع إهمال العمود الثالث`);
 });
 
 function pCPR(p) {
@@ -3091,7 +2920,6 @@ function ingestBulkLines(ls, md, rp) {
     if (md === 'order' || md === 'palm') {
         if (!hasPerm('canNewOrder')) return { added: 0, updated: 0, ignored: 0 };
         saveUndoSnapshot(md === 'order' ? "إدراج الطلبية" : "إدراج قراءات البالم");
-        const sumMode = el('pasteBehaviorSelect')?.value === 'sum';
         if (rp) {
             if (md === 'order') { orderData = []; selectedOrderIndices.clear(); }
             else { palmData = []; selectedPalmIndices.clear(); selectedWrongCodes.clear(); }
@@ -3110,10 +2938,10 @@ function ingestBulkLines(ls, md, rp) {
         });
         if (md === 'order') {
             const exM = new Map(); orderData.forEach(o => exM.set(nc(o.code), o));
-            batchMap.forEach((qty, code) => { if (exM.has(code)) { const o = exM.get(code); o.reqQty = sumMode ? (parseFloat(o.reqQty) || 0) + qty : qty; u++; } else orderData.push({ code, reqQty: qty, note: "" }); });
+            batchMap.forEach((qty, code) => { if (exM.has(code)) exM.get(code).reqQty = qty; else orderData.push({ code, reqQty: qty, note: "" }); });
         } else {
             const exM = new Map(); palmData.forEach(p => exM.set(nc(p.scannedCode), p));
-            batchMap.forEach((qty, code) => { if (exM.has(code)) { const p0 = exM.get(code); p0.qty = sumMode ? (parseFloat(p0.qty) || 0) + qty : qty; u++; } else palmData.push({ scannedCode: code, qty }); });
+            batchMap.forEach((qty, code) => { if (exM.has(code)) exM.get(code).qty = qty; else palmData.push({ scannedCode: code, qty }); });
         }
     } else if (md === 'catalog' && currentUser?.isAdmin) {
         if (rp) catalogList = [];
@@ -3139,7 +2967,7 @@ function ingestBulkLines(ls, md, rp) {
             let c0 = nc(p[0]), c1 = p.length >= 2 ? nc(p[1]) : c0;
             if (!c0 || (i === 0 && c0.includes("كود"))) return;
             let sc = c0, mc = c1; if (isB(c0) && !isB(c1)) { mc = c0; sc = c1; }
-            const on = p.length >= 3 ? cleanText(p[2]) : "", pk = `${sc}__${mc}`;
+            const on = p.length >= 3 ? p[2] : "", pk = `${sc}__${mc}`;
             if (eM.has(pk)) { const cr = shortcutList[eM.get(pk)]; if (on && cr.name !== on) { cr.name = on; u++; } else ig++; }
             else { eM.set(pk, shortcutList.length); shortcutList.push({ shortCode: sc, mainCode: mc, name: on }); a++; }
         });
@@ -3160,9 +2988,9 @@ function runStandaloneCodeLookup(sel) {
     let rQ = 0, sQ = 0; if (lastCalculatedSummary) lastCalculatedSummary.mR.forEach(row => { if (chkMBP(row, inf, 1) || chkMBP(row, inf, 2)) rQ += row.req; });
     palmData.forEach(p => { const pI = bCI(p.scannedCode); if (chkMBP(inf, pI, 1) || chkMBP(inf, pI, 2)) sQ += (parseFloat(p.qty) || 0); });
     const qL = v.toLowerCase(), mI = [];
-    for (let j = 0; j < catalogList.length; j++) { const it = catalogList[j], pl = `${esc(it.code)} ${esc(it.name)} ${esc(it.story)} ${esc(it.color)} ${esc(it.colorNum)} ${esc(it.size)}`.toLowerCase(); if (it.code === inf.mC || pl.includes(qL) || (inf.stC && it.story.replace(/^0+/, '') === inf.stC)) { mI.push(it); if (mI.length >= 25) break; } }
-    const sH = mI.map((it, idx) => `<tr onclick="el('standaloneLookupInput').value='${escAttr(it.code)}';runStandaloneCodeLookup();" class="cursor-pointer ${it.code === inf.mC ? 'bg-indigo-50/70 font-bold' : ''}"><td class="text-center">${idx + 1}</td><td class="font-mono">${esc(it.code)}</td><td class="font-mono">${mainCodeToShortMap.get(it.code) || '-'}</td><td>${esc(it.name)}</td><td class="text-center">${esc(it.story)}</td><td class="text-center font-bold">${esc(it.size)}</td><td class="text-center">${esc(it.color)}</td><td class="text-center">${esc(it.season)}</td></tr>`).join('');
-    r.innerHTML = `<div class="erp-card p-5 space-y-4"><div class="flex justify-between items-center border-b border-slate-100 pb-3"><h4 class="font-black text-sm">بطاقة الصنف: <span class="font-mono text-indigo-600">${esc(inf.rC)}</span></h4><span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${inf.mVP !== '-' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">${inf.mVP !== '-' ? inf.mVP : 'غير مسجل بالقاعدة'}</span></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"><div class="bg-slate-50 p-3 rounded-xl">الأساسي: <b class="font-mono">${esc(inf.mC)}</b></div><div class="bg-slate-50 p-3 rounded-xl">المختصر: <b>${sS}</b></div><div class="bg-slate-50 p-3 rounded-xl">الاسم: <b>${esc(inf.name)}</b></div></div><div class="grid grid-cols-4 md:grid-cols-8 gap-2 text-center text-[11px]"><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">أول 4</span><b>${esc(inf.f4 || '-')}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">القصة</span><b>${esc(inf.sp.stN)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">القياس</span><b class="text-indigo-600">${esc(inf.sp.szV)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">اللون</span><b>${esc(inf.sp.cName)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">رقم اللون</span><b>${esc(inf.sp.cNum)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">الموسم</span><b>${esc(inf.sp.sV)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">قالب/دروب</span><b>${esc(inf.mV)}/${esc(inf.dV)}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">مطلوب/مسحوب</span><b class="text-emerald-600">${rQ} / ${sQ}</b></div></div></div><div class="erp-card overflow-hidden"><div class="px-4 py-2.5 border-b border-slate-200 font-bold text-xs text-slate-700">أصناف مشابهة بالقاعدة (${esc(mI.length)})</div><div class="max-h-[280px] overflow-y-auto"><table class="pro-table w-full"><thead><tr><th class="w-10 text-center">#</th><th>الباركود</th><th>المختصر</th><th>الاسم</th><th class="w-16 text-center">قصة</th><th class="w-16 text-center">قياس</th><th class="w-20 text-center">لون</th><th class="w-16 text-center">موسم</th></tr></thead><tbody>${sH || `<tr><td colspan="8" class="text-center py-6 text-slate-400">لا توجد نتائج مشابهة</td></tr>`}</tbody></table></div></div>`;
+    for (let j = 0; j < catalogList.length; j++) { const it = catalogList[j], pl = `${it.code} ${it.name} ${it.story} ${it.color} ${it.colorNum} ${it.size}`.toLowerCase(); if (it.code === inf.mC || pl.includes(qL) || (inf.stC && it.story.replace(/^0+/, '') === inf.stC)) { mI.push(it); if (mI.length >= 25) break; } }
+    const sH = mI.map((it, idx) => `<tr onclick="el('standaloneLookupInput').value='${escAttr(it.code)}';runStandaloneCodeLookup();" class="cursor-pointer ${it.code === inf.mC ? 'bg-indigo-50/70 font-bold' : ''}"><td class="text-center">${idx + 1}</td><td class="font-mono">${it.code}</td><td class="font-mono">${mainCodeToShortMap.get(it.code) || '-'}</td><td>${it.name}</td><td class="text-center">${it.story}</td><td class="text-center font-bold">${it.size}</td><td class="text-center">${it.color}</td><td class="text-center">${it.season}</td></tr>`).join('');
+    r.innerHTML = `<div class="erp-card p-5 space-y-4"><div class="flex justify-between items-center border-b border-slate-100 pb-3"><h4 class="font-black text-sm">بطاقة الصنف: <span class="font-mono text-indigo-600">${inf.rC}</span></h4><span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${inf.mVP !== '-' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">${inf.mVP !== '-' ? inf.mVP : 'غير مسجل بالقاعدة'}</span></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"><div class="bg-slate-50 p-3 rounded-xl">الأساسي: <b class="font-mono">${inf.mC}</b></div><div class="bg-slate-50 p-3 rounded-xl">المختصر: <b>${sS}</b></div><div class="bg-slate-50 p-3 rounded-xl">الاسم: <b>${inf.name}</b></div></div><div class="grid grid-cols-4 md:grid-cols-8 gap-2 text-center text-[11px]"><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">أول 4</span><b>${inf.f4 || '-'}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">القصة</span><b>${inf.sp.stN}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">القياس</span><b class="text-indigo-600">${inf.sp.szV}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">اللون</span><b>${inf.sp.cName}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">رقم اللون</span><b>${inf.sp.cNum}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">الموسم</span><b>${inf.sp.sV}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">قالب/دروب</span><b>${inf.mV}/${inf.dV}</b></div><div class="bg-slate-50 p-2 rounded-xl"><span class="text-slate-400 block">مطلوب/مسحوب</span><b class="text-emerald-600">${rQ} / ${sQ}</b></div></div></div><div class="erp-card overflow-hidden"><div class="px-4 py-2.5 border-b border-slate-200 font-bold text-xs text-slate-700">أصناف مشابهة بالقاعدة (${mI.length})</div><div class="max-h-[280px] overflow-y-auto"><table class="pro-table w-full"><thead><tr><th class="w-10 text-center">#</th><th>الباركود</th><th>المختصر</th><th>الاسم</th><th class="w-16 text-center">قصة</th><th class="w-16 text-center">قياس</th><th class="w-20 text-center">لون</th><th class="w-16 text-center">موسم</th></tr></thead><tbody>${sH || `<tr><td colspan="8" class="text-center py-6 text-slate-400">لا توجد نتائج مشابهة</td></tr>`}</tbody></table></div></div>`;
 }
 
 function switchTab(t) {
@@ -3218,7 +3046,7 @@ function renderPalmVirtual() {
     let h = (st * ROW_HEIGHT) > 0 ? `<tr style="height:${st * ROW_HEIGHT}px"></tr>` : '';
     for (let i = st; i < en; i++) {
         const r = filteredPalmIndices[i], p = palmData[r], io = bCI(p.scannedCode), isSel = selectedPalmIndices.has(r);
-        h += `<tr style="height:36px" class="${isSel ? 'row-selected' : ''}"><td class="text-center perm-delete"><input type="checkbox" ${isSel ? 'checked' : ''} onchange="togglePalmRowSelect(${r},this.checked,this)" class="w-3.5 h-3.5 accent-indigo-600"></td><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updatePalmRow(${r},'scannedCode',this.innerText)" class="font-bold font-mono">${esc(io.rC)}</td><td class="text-center">${io.aS ? `<span class="bg-purple-50 text-purple-700 px-1.5 rounded">${esc(io.aS)}</span>` : '-'}</td><td class="font-mono text-slate-500">${esc(io.mC)}</td><td class="font-semibold">${esc(io.name)}</td><td class="text-[10.5px] text-slate-500">${esc(io.sp.pT)}</td><td class="text-center text-slate-500">${esc(io.mat)}</td><td contenteditable="${canEdit}" onblur="updatePalmRow(${r},'qty',this.innerText)" class="text-center font-black">${esc(p.qty)}</td><td class="text-center perm-delete"><button type="button" onclick="deleteSinglePalmRow(${r})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+        h += `<tr style="height:36px" class="${isSel ? 'row-selected' : ''}"><td class="text-center perm-delete"><input type="checkbox" ${isSel ? 'checked' : ''} onchange="togglePalmRowSelect(${r},this.checked,this)" class="w-3.5 h-3.5 accent-indigo-600"></td><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updatePalmRow(${r},'scannedCode',this.innerText)" class="font-bold font-mono">${io.rC}</td><td class="text-center">${io.aS ? `<span class="bg-purple-50 text-purple-700 px-1.5 rounded">${io.aS}</span>` : '-'}</td><td class="font-mono text-slate-500">${io.mC}</td><td class="font-semibold">${io.name}</td><td class="text-[10.5px] text-slate-500">${io.sp.pT}</td><td class="text-center text-slate-500">${io.mat}</td><td contenteditable="${canEdit}" onblur="updatePalmRow(${r},'qty',this.innerText)" class="text-center font-black">${p.qty}</td><td class="text-center perm-delete"><button type="button" onclick="deleteSinglePalmRow(${r})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
     }
     const bp = Math.max(0, (l - en) * ROW_HEIGHT); if (bp > 0) h += `<tr style="height:${bp}px"></tr>`;
     t.innerHTML = h;
@@ -3239,7 +3067,7 @@ function renderCatalogVirtual() {
     let h = (st * ROW_HEIGHT) > 0 ? `<tr style="height:${st * ROW_HEIGHT}px"></tr>` : '';
     for (let i = st; i < en; i++) {
         const r = filteredCatalogIndices[i], c = catalogList[r];
-        h += `<tr style="height:36px"><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'code',this.innerText)" class="font-mono font-bold">${esc(c.code)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'name',this.innerText)" class="font-semibold">${esc(c.name)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'story',this.innerText)" class="text-center">${esc(c.story)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'size',this.innerText)" class="text-center font-bold text-indigo-600">${esc(c.size)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'color',this.innerText)" class="text-center">${esc(c.color)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'colorNum',this.innerText)" class="text-center font-mono">${esc(c.colorNum)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'mold',this.innerText)" class="text-center">${esc(c.mold)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'drop',this.innerText)" class="text-center">${esc(c.drop)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'material',this.innerText)" class="text-center">${esc(c.material)}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'season',this.innerText)" class="text-center">${esc(c.season)}</td><td class="text-center perm-admin-only"><button type="button" onclick="if(confirm('حذف؟')){catalogList.splice(${r},1);rebuildLookups();filterAndRenderCatalog();recalculateAndRender();}" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+        h += `<tr style="height:36px"><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'code',this.innerText)" class="font-mono font-bold">${c.code}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'name',this.innerText)" class="font-semibold">${c.name}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'story',this.innerText)" class="text-center">${c.story}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'size',this.innerText)" class="text-center font-bold text-indigo-600">${c.size}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'color',this.innerText)" class="text-center">${c.color}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'colorNum',this.innerText)" class="text-center font-mono">${c.colorNum}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'mold',this.innerText)" class="text-center">${c.mold}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'drop',this.innerText)" class="text-center">${c.drop}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'material',this.innerText)" class="text-center">${c.material}</td><td contenteditable="${canEdit}" onblur="updateCatalogRow(${r},'season',this.innerText)" class="text-center">${c.season}</td><td class="text-center perm-admin-only"><button type="button" onclick="if(confirm('حذف؟')){catalogList.splice(${r},1);rebuildLookups();filterAndRenderCatalog();recalculateAndRender();}" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
     }
     const bp = Math.max(0, (l - en) * ROW_HEIGHT); if (bp > 0) h += `<tr style="height:${bp}px"></tr>`;
     t.innerHTML = h;
@@ -3260,7 +3088,7 @@ function renderShortcutsVirtual() {
     let h = (st * ROW_HEIGHT) > 0 ? `<tr style="height:${st * ROW_HEIGHT}px"></tr>` : '';
     for (let i = st; i < en; i++) {
         const r = filteredShortcutIndices[i], s = shortcutList[r];
-        h += `<tr style="height:36px"><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'shortCode',this.innerText)" class="font-mono font-bold">${esc(s.shortCode)}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'mainCode',this.innerText)" class="font-mono text-slate-500">${esc(s.mainCode)}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'name',this.innerText)">${esc(s.name || getItemName(s.mainCode))}</td><td class="text-center perm-admin-only"><button type="button" onclick="if(confirm('حذف؟')){shortcutList.splice(${r},1);rebuildLookups();filterAndRenderShortcuts();recalculateAndRender();}" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+        h += `<tr style="height:36px"><td class="text-center text-slate-400">${i + 1}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'shortCode',this.innerText)" class="font-mono font-bold">${s.shortCode}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'mainCode',this.innerText)" class="font-mono text-slate-500">${s.mainCode}</td><td contenteditable="${canEdit}" onblur="updateShortcutRow(${r},'name',this.innerText)">${s.name || getItemName(s.mainCode)}</td><td class="text-center perm-admin-only"><button type="button" onclick="if(confirm('حذف؟')){shortcutList.splice(${r},1);rebuildLookups();filterAndRenderShortcuts();recalculateAndRender();}" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
     }
     const bp = Math.max(0, (l - en) * ROW_HEIGHT); if (bp > 0) h += `<tr style="height:${bp}px"></tr>`;
     t.innerHTML = h;
@@ -3291,8 +3119,9 @@ function clearCatalogWithWarning() { if (!currentUser?.isAdmin) return; if (conf
 function clearShortcutsWithWarning() { if (!currentUser?.isAdmin) return; if (confirm("مسح المختصرات بالكامل؟")) { shortcutList = []; rebuildLookups(); filterAndRenderShortcuts(); recalculateAndRender(); } }
 function setOrderFilter(f) { currentFilter = f; document.querySelectorAll('.kpi-filter-card').forEach(c => c.classList.remove('active-kpi')); if (el('kpiCard_' + f)) el('kpiCard_' + f).classList.add('active-kpi'); const lbs = { 'ALL': 'عرض: الكل', 'MISMATCH': 'الاختلافات', 'MATCH': 'المطابق فقط', 'SHORTAGE': 'النواقص فقط', 'OVERAGE': 'الزيادات فقط' }; if (el('activeFilterIndicator')) el('activeFilterIndicator').textContent = lbs[f] || 'عرض: الكل'; recalculateAndRender(false); }
 function focusWrongPanel() { const pnl = el('wrongPanelContainer'); if (pnl) { pnl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); pnl.classList.add('ring-2', 'ring-rose-500'); setTimeout(() => pnl.classList.remove('ring-2', 'ring-rose-500'), 1100); } }
-function loadLogo(e) { if (!currentUser?.isAdmin) return; const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { if (el('logoImg')) { el('logoImg').src = ev.target.result; el('logoImg').classList.remove('hidden'); if (el('logoPlaceholder')) el('logoPlaceholder').classList.add('hidden'); } localStorage.setItem('company400_logo', ev.target.result); logoDirty = true; saveAppState(true); showPasteToast("تم الحفظ", "تم تثبيت الشعار"); }; r.readAsDataURL(f); }
-  // ================= 15. إدارة الأرشيف وطلبات الاستعادة وتبويب الطلبات للمدير =================
+function loadLogo(e) { if (!currentUser?.isAdmin) return; const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { if (el('logoImg')) { el('logoImg').src = ev.target.result; el('logoImg').classList.remove('hidden'); if (el('logoPlaceholder')) el('logoPlaceholder').classList.add('hidden'); } localStorage.setItem('company400_logo', ev.target.result); saveAppState(true); showPasteToast("تم الحفظ", "تم تثبيت الشعار"); }; r.readAsDataURL(f); }
+
+// ================= 15. إدارة الأرشيف وطلبات الاستعادة وتبويب الطلبات للمدير =================
 function getAccessibleArchiveList() {
     if (currentUser?.isAdmin || hasPerm('canViewAllWeeks')) return archiveList;
     const curW = String(getCurrentISOWeek());
@@ -3313,13 +3142,13 @@ function populateArchiveDatalistsAndDropdown() {
         if (!currentUser?.isAdmin && !hasPerm('canViewAllWeeks')) {
             const curW = String(getCurrentISOWeek());
             selectedArchiveWeekFilter = curW;
-            dd.innerHTML = `<option value="${curW}" selected>الأسبوع الحالي فقط: ${curW} (${esc(accessibleList.length)} تقرير)</option>`;
+            dd.innerHTML = `<option value="${curW}" selected>الأسبوع الحالي فقط: ${curW} (${accessibleList.length} تقرير)</option>`;
         } else {
             if (selectedArchiveWeekFilter && selectedArchiveWeekFilter !== 'ALL' && !weekCounts.has(selectedArchiveWeekFilter)) selectedArchiveWeekFilter = '';
-            let opts = `<option value="">-- اختر الأسبوع (${esc(accessibleList.length)} تقرير) --</option>`;
+            let opts = `<option value="">-- اختر الأسبوع (${accessibleList.length} تقرير) --</option>`;
             if (sortedWeeks.length > 0) {
-                opts += `<option value="ALL" ${selectedArchiveWeekFilter === 'ALL' ? 'selected' : ''}>عرض كافة الأسابيع (${esc(sortedWeeks.length)})</option>`;
-                sortedWeeks.forEach(w => { opts += `<option value="${escAttr(w)}" ${selectedArchiveWeekFilter === w ? 'selected' : ''}>الأسبوع ${esc(w)} (${weekCounts.get(w)} تقرير)</option>`; });
+                opts += `<option value="ALL" ${selectedArchiveWeekFilter === 'ALL' ? 'selected' : ''}>عرض كافة الأسابيع (${sortedWeeks.length})</option>`;
+                sortedWeeks.forEach(w => { opts += `<option value="${escAttr(w)}" ${selectedArchiveWeekFilter === w ? 'selected' : ''}>الأسبوع ${w} (${weekCounts.get(w)} تقرير)</option>`; });
             }
             dd.innerHTML = opts;
         }
@@ -3344,8 +3173,8 @@ function openSaveArchiveModal() {
         el('btnSaveAsNewCopy')?.classList.remove('hidden');
         if (el('btnConfirmArchiveText')) el('btnConfirmArchiveText').textContent = isAdmin ? "تحديث النسخة الأصلية" : "حفظ التعديلات وانتظار الاعتماد";
         if (el('saveArchiveModeText')) el('saveArchiveModeText').innerHTML = isAdmin
-            ? `سيتم <b>تحديث النسخة الأصلية</b> لتقرير (${esc(ex.hallName)}) في الأرشيف.`
-            : `سيتم إرسال تعديلاتك على تقرير (${esc(ex.hallName)}) إلى تبويب <b>الطلبات</b> عند المدير للاعتماد.`;
+            ? `سيتم <b>تحديث النسخة الأصلية</b> لتقرير (${ex.hallName}) في الأرشيف.`
+            : `سيتم إرسال تعديلاتك على تقرير (${ex.hallName}) إلى تبويب <b>الطلبات</b> عند المدير للاعتماد.`;
     } else {
         el('archWeekNum').value = getCurrentISOWeek(); el('archDateInput').value = el('headerDateText')?.innerText.trim() || getTodayFormatted(); el('archHallName').value = el('orderRefTitle')?.innerText.trim() || ''; el('archNotesInput').value = '';
         el('btnSaveAsNewCopy')?.classList.add('hidden');
@@ -3393,10 +3222,9 @@ function buildArchiveEditDiffSummary(oldArch, newOrder, newPalm, newSwaps) {
     return changes.length > 0 ? changes : ["حفظ النسخة بعد المراجعة دون تغيير رقمي في الكميات"];
 }
 
-// ===== [التعديل 3] إلغاء تصادم الطلبات الثلاثية في confirmSaveToArchive =====
 async function confirmSaveToArchive(forceNewCopy = false) {
     if (!hasPerm('canSaveArchive')) return;
-    const hall = cleanText(el('archHallName').value.trim()), wk = cleanText(el('archWeekNum').value.trim()), dt = cleanText(el('archDateInput').value.trim()), nt = cleanText(el('archNotesInput').value.trim());
+    const hall = el('archHallName').value.trim(), wk = el('archWeekNum').value.trim(), dt = el('archDateInput').value.trim(), nt = el('archNotesInput').value.trim();
     if (!hall || !wk) { alert("أدخل اسم الصالة ورقم الأسبوع!"); return; }
 
     const btn = el('btnConfirmArchivePrimary');
@@ -3404,13 +3232,21 @@ async function confirmSaveToArchive(forceNewCopy = false) {
 
     try {
         const isAdmin = Boolean(currentUser?.isAdmin);
-        showPasteToast("جاري الحفظ والمزامنة ⏳", "يرجى الانتظار لحظات...");
+        showPasteToast("جاري الحفظ السريع بالسحابة ⏳", "يرجى الانتظار لحظات...");
 
         const localOrderCopy = JSON.parse(JSON.stringify(orderData));
         const localPalmCopy = JSON.parse(JSON.stringify(palmData));
         const localSwapCopy = JSON.parse(JSON.stringify(currentSessionSwapLog));
         const localKpisCopy = lastCalculatedSummary?.kpis || {};
         const editTargetId = (!forceNewCopy && activeEditingArchiveId) ? activeEditingArchiveId : null;
+
+        // مهلة قصوى 6 ثوانٍ للسحب السحابي حتى لا تتجمد النافذة أبداً
+        try {
+            await Promise.race([
+                restoreFromExternalCloud(true),
+                new Promise(res => setTimeout(res, 6000))
+            ]);
+        } catch (e) {}
 
         const existingIdx = editTargetId ? archiveList.findIndex(x => x.id === editTargetId) : -1;
         const payload = {
@@ -3423,14 +3259,14 @@ async function confirmSaveToArchive(forceNewCopy = false) {
             lastEditedBy: currentUser?.name || 'غير محدد',
             approvalStatus: isAdmin ? 'APPROVED' : 'PENDING',
             approvedBy: isAdmin ? (currentUser?.name || 'المدير') : '',
-            restoreApprovedForUser: '',
-            updatedAt: Date.now()
+            restoreApprovedForUser: ''
         };
 
         if (existingIdx !== -1) {
             const oldArch = archiveList[existingIdx];
             const auditList = Array.isArray(oldArch.editAuditLog) ? [...oldArch.editAuditLog] : [];
             const nowFullTime = `${getTodayFormatted()} — ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
             if (!isAdmin && typeof buildArchiveEditDiffSummary === 'function') {
                 auditList.push({
                     editedBy: currentUser?.name || 'موظف',
@@ -3439,6 +3275,7 @@ async function confirmSaveToArchive(forceNewCopy = false) {
                 });
                 payload.editAuditLog = auditList;
             }
+
             archiveList[existingIdx] = { ...archiveList[existingIdx], ...payload };
         } else {
             archiveList.unshift({ id: 'ARCH_' + Date.now(), ...payload });
@@ -3448,6 +3285,7 @@ async function confirmSaveToArchive(forceNewCopy = false) {
         selectedArchiveWeekFilter = String(wk); openWeekKeys.add(String(wk));
         clearAllSelections(); orderData = []; palmData = [];
 
+        // إغلاق النافذة وتحديث الواجهة فوراً
         closeSaveArchiveModal();
         populateArchiveDatalistsAndDropdown();
         updateEditingArchiveBannerUI();
@@ -3464,7 +3302,7 @@ async function confirmSaveToArchive(forceNewCopy = false) {
         if (btn) btn.disabled = false;
     }
 }
-
+   // طلب استعادة نسخة من الأرشيف للتعديل (للموظف)
 function openRestoreRequestModal(archId) {
     const a = archiveList.find(x => x.id === archId);
     if (!a) return;
@@ -3477,7 +3315,7 @@ function openRestoreRequestModal(archId) {
 }
 
 async function submitRestoreRequestToManager() {
-    const reason = cleanText((el('reqRestoreReasonInput')?.value || '').trim());
+    const reason = (el('reqRestoreReasonInput')?.value || '').trim();
     if (!reason) { alert("يرجى كتابة سبب طلب الاستعادة للتعديل!"); return; }
     const a = archiveList.find(x => x.id === pendingRestoreTargetArchId);
     if (!a) { hide('restoreRequestModal'); return; }
@@ -3489,6 +3327,8 @@ async function submitRestoreRequestToManager() {
     const targetWeek = a.weekNum || 'غير محدد';
     const targetDate = a.date || '';
 
+    await restoreFromExternalCloud(true);
+
     restoreRequestsList.unshift({
         id: 'RREQ_' + Date.now(),
         archId: targetArchId,
@@ -3498,8 +3338,7 @@ async function submitRestoreRequestToManager() {
         requestedBy: currentUser?.name || 'موظف',
         requestedAt: `${getTodayFormatted()} ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`,
         reason,
-        status: 'PENDING',
-        updatedAt: Date.now()
+        status: 'PENDING'
     });
 
     await saveToIndexedDB(getFullDatabasePayload(false));
@@ -3512,6 +3351,7 @@ async function submitRestoreRequestToManager() {
     await syncToExternalCloud(false, true, !currentUser?.isAdmin);
 }
 
+// تبويب الطلبات المستقل للمدير
 function switchRequestsSubTab(sub) {
     activeRequestsSubTab = sub || 'approvals';
     document.querySelectorAll('.req-sub-panel').forEach(p => p.classList.add('hidden'));
@@ -3543,12 +3383,12 @@ function renderManagerRequestsCenter() {
                 const swapsCount = Array.isArray(a.swapLog) ? a.swapLog.length : 0;
                 return `<div onclick="openApprovalRequestDetail('${escAttr(a.id)}')" class="cursor-pointer bg-white hover:border-indigo-500 border border-amber-300 rounded-2xl p-3.5 shadow-sm transition-all space-y-1.5">
                     <div class="flex justify-between items-center">
-                        <span class="font-black text-sm text-slate-900">${esc(a.hallName)}</span>
-                        <span class="bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">أسبوع ${esc(a.weekNum)}</span>
+                        <span class="font-black text-sm text-slate-900">${a.hallName}</span>
+                        <span class="bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">أسبوع ${a.weekNum}</span>
                     </div>
                     <div class="flex flex-wrap justify-between items-center text-[11px] text-slate-600">
-                        <span><i class="fa-solid fa-user text-indigo-600 ml-1"></i>الموظف: <b>${esc(a.createdBy || 'غير محدد')}</b></span>
-                        <span class="font-mono" dir="ltr">${esc(a.date)}</span>
+                        <span><i class="fa-solid fa-user text-indigo-600 ml-1"></i>الموظف: <b>${a.createdBy || 'غير محدد'}</b></span>
+                        <span class="font-mono" dir="ltr">${a.date}</span>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5 pt-1 text-[10.5px]">
                         <span class="bg-slate-100 px-2 py-0.5 rounded font-bold">مطلوب: ${a.kpis?.tRP || 0} | مسحوب: ${a.kpis?.tSP || 0}</span>
@@ -3568,14 +3408,14 @@ function renderManagerRequestsCenter() {
             resListEl.innerHTML = pendingRestores.map(r => `
                 <div onclick="openRestoreRequestDetail('${escAttr(r.id)}')" class="cursor-pointer bg-white hover:border-indigo-500 border border-indigo-200 rounded-2xl p-3.5 shadow-sm transition-all space-y-1.5">
                     <div class="flex justify-between items-center">
-                        <span class="font-black text-sm text-slate-900">${esc(r.hallName)}</span>
-                        <span class="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-full">الأسبوع ${esc(r.weekNum)}</span>
+                        <span class="font-black text-sm text-slate-900">${r.hallName}</span>
+                        <span class="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-full">الأسبوع ${r.weekNum}</span>
                     </div>
                     <div class="flex justify-between items-center text-[11px] text-slate-600">
-                        <span>مقدم الطلب: <b>${esc(r.requestedBy)}</b></span>
-                        <span class="text-[10px] text-slate-400">${esc(r.requestedAt || '')}</span>
+                        <span>مقدم الطلب: <b>${r.requestedBy}</b></span>
+                        <span class="text-[10px] text-slate-400">${r.requestedAt || ''}</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 truncate">السبب: ${esc(r.reason)}</p>
+                    <p class="text-[11px] text-slate-500 truncate">السبب: ${r.reason}</p>
                 </div>
             `).join('');
         }
@@ -3593,16 +3433,16 @@ function openApprovalRequestDetail(archId) {
 
     const editAuditInReqHtml = auditLog.length > 0 ? `
         <div class="bg-amber-50/70 border border-amber-300 rounded-xl p-3 space-y-2">
-            <h5 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${esc(auditLog.length)}):</h5>
+            <h5 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${auditLog.length}):</h5>
             <div class="space-y-1.5">
                 ${auditLog.map(ed => `
                     <div class="bg-white border border-amber-200 rounded-lg p-2 text-xs space-y-1">
                         <div class="flex justify-between items-center font-bold text-slate-800">
-                            <span>${esc(ed.editedBy)}</span>
-                            <span class="font-mono text-[10.5px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded" dir="ltr">${esc(ed.editedAt)}</span>
+                            <span>${ed.editedBy}</span>
+                            <span class="font-mono text-[10.5px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded" dir="ltr">${ed.editedAt}</span>
                         </div>
                         <ul class="list-disc pr-5 text-[11px] text-slate-700 space-y-0.5">
-                            ${(ed.details || []).map(d => `<li>${esc(d)}</li>`).join('')}
+                            ${(ed.details || []).map(d => `<li>${d}</li>`).join('')}
                         </ul>
                     </div>
                 `).join('')}
@@ -3611,21 +3451,21 @@ function openApprovalRequestDetail(archId) {
 
     const actionsLogHtml = swaps.length > 0 ? `
         <div class="bg-teal-50/70 border border-teal-300 rounded-xl p-3 space-y-2">
-            <h5 class="font-black text-xs text-teal-900"><i class="fa-solid fa-list-check ml-1"></i> ما تم إجراؤه من استبدالات واعتماد أكواد (${esc(swaps.length)} إجراء):</h5>
+            <h5 class="font-black text-xs text-teal-900"><i class="fa-solid fa-list-check ml-1"></i> ما تم إجراؤه من استبدالات واعتماد أكواد (${swaps.length} إجراء):</h5>
             <table class="pro-table w-full bg-white rounded-lg overflow-hidden border border-teal-200">
                 <thead><tr><th class="w-16 text-center">الوقت</th><th>الإجراء</th><th>كود الطلبية</th><th>الكود المسحوب</th><th class="w-14 text-center">العدد</th><th>التفاصيل</th></tr></thead>
-                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10px]">${esc(s.time || '-')}</td><td class="font-bold text-[11px]">${esc(s.type)}</td><td class="font-mono text-rose-700 font-bold">${esc(s.orderCode)}</td><td class="font-mono text-indigo-700 font-bold">${esc(s.scannedCode)}</td><td class="text-center font-black">${esc(s.qty)}</td><td class="text-[10.5px]">${esc(s.reason)}</td></tr>`).join('')}</tbody>
+                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10px]">${s.time || '-'}</td><td class="font-bold text-[11px]">${s.type}</td><td class="font-mono text-rose-700 font-bold">${s.orderCode}</td><td class="font-mono text-indigo-700 font-bold">${s.scannedCode}</td><td class="text-center font-black">${s.qty}</td><td class="text-[10.5px]">${s.reason}</td></tr>`).join('')}</tbody>
             </table>
         </div>` : `<div class="bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-500 font-semibold">لم يتم تسجيل استبدالات يدوية في هذه الطلبية.</div>`;
 
-    const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${esc(r.oC)}</td><td class="font-semibold">${esc(r.name)}</td><td class="text-center font-black">${esc(r.req)}</td><td class="text-center font-black text-blue-600">${esc(r.scn)}</td><td class="text-center font-bold" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-[10.5px] text-slate-600">${esc(r.note || '-')}</td></tr>`).join('');
+    const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${r.oC}</td><td class="font-semibold">${r.name}</td><td class="text-center font-black">${r.req}</td><td class="text-center font-black text-blue-600">${r.scn}</td><td class="text-center font-bold" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-[10.5px] text-slate-600">${r.note || '-'}</td></tr>`).join('');
 
     viewer.innerHTML = `
         <div class="space-y-4">
             <div class="flex flex-wrap justify-between items-start gap-2 border-b border-slate-200 pb-3">
                 <div>
-                    <h4 class="font-black text-base text-slate-900">تقرير الطلبية: ${esc(a.hallName)} — الأسبوع (${esc(a.weekNum)})</h4>
-                    <p class="text-xs text-slate-600 mt-0.5">أنشأ الطلب: <b>${esc(a.createdBy || 'غير محدد')}</b> • التاريخ: <span class="font-mono">${esc(a.date)}</span> ${a.notes ? `• ملاحظة: ${esc(a.notes)}` : ''}</p>
+                    <h4 class="font-black text-base text-slate-900">تقرير الطلبية: ${a.hallName} — الأسبوع (${a.weekNum})</h4>
+                    <p class="text-xs text-slate-600 mt-0.5">أنشأ الطلب: <b>${a.createdBy || 'غير محدد'}</b> • التاريخ: <span class="font-mono">${a.date}</span> ${a.notes ? `• ملاحظة: ${a.notes}` : ''}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button type="button" onclick="decideOrderApproval('${escAttr(a.id)}', true)" class="btn-primary !bg-emerald-600 !border-emerald-700"><i class="fa-solid fa-check"></i> اعتماد</button>
@@ -3634,12 +3474,12 @@ function openApprovalRequestDetail(archId) {
             </div>
 
             <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs">
-                <div class="bg-white border border-slate-200 p-2 rounded-xl">المطلوب: <b>${esc(k.tRP)}</b></div>
-                <div class="bg-white border border-slate-200 p-2 rounded-xl">المسحوب: <b>${esc(k.tSP)}</b></div>
-                <div class="bg-emerald-50 border border-emerald-200 p-2 rounded-xl text-emerald-800">المطابقة: <b>${esc(k.mP)}%</b></div>
-                <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl text-rose-700">نقص: <b>${esc(k.sS)}</b></div>
-                <div class="bg-amber-50 border border-amber-200 p-2 rounded-xl text-amber-800">زيادة: <b>${esc(k.oS)}</b></div>
-                <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl text-rose-700">خاطئ: <b>${esc(k.wQT)}</b></div>
+                <div class="bg-white border border-slate-200 p-2 rounded-xl">المطلوب: <b>${k.tRP}</b></div>
+                <div class="bg-white border border-slate-200 p-2 rounded-xl">المسحوب: <b>${k.tSP}</b></div>
+                <div class="bg-emerald-50 border border-emerald-200 p-2 rounded-xl text-emerald-800">المطابقة: <b>${k.mP}%</b></div>
+                <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl text-rose-700">نقص: <b>${k.sS}</b></div>
+                <div class="bg-amber-50 border border-amber-200 p-2 rounded-xl text-amber-800">زيادة: <b>${k.oS}</b></div>
+                <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl text-rose-700">خاطئ: <b>${k.wQT}</b></div>
             </div>
 
             ${editAuditInReqHtml}
@@ -3673,7 +3513,6 @@ function decideOrderApproval(archId, isApproved) {
         showPasteToast("تم تسجيل عدم الاعتماد ✕", `رُفض اعتماد طلبية (${a.hallName})`);
     }
 
-    touch(a);
     if (el('reqApprovalDetailViewer')) {
         el('reqApprovalDetailViewer').innerHTML = `<div class="text-center py-14 text-slate-400 text-xs font-bold">تم تنفيذ القرار بنجاح — اختر طلباً آخر للمراجعة</div>`;
     }
@@ -3693,7 +3532,7 @@ function openRestoreRequestDetail(reqId) {
             <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
                 <div>
                     <h4 class="font-black text-base text-slate-900">تفاصيل طلب الاستعادة من الأرشيف</h4>
-                    <p class="text-xs text-slate-500">مقدم الطلب: <b>${esc(r.requestedBy)}</b> • ${esc(r.requestedAt || '')}</p>
+                    <p class="text-xs text-slate-500">مقدم الطلب: <b>${r.requestedBy}</b> • ${r.requestedAt || ''}</p>
                 </div>
                 <span class="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full">بانتظار الموافقة</span>
             </div>
@@ -3701,17 +3540,17 @@ function openRestoreRequestDetail(reqId) {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div class="bg-white border border-slate-200 rounded-xl p-3.5">
                     <span class="text-slate-400 block mb-1">اسم الصالة:</span>
-                    <b class="text-base text-slate-900">${esc(r.hallName)}</b>
+                    <b class="text-base text-slate-900">${r.hallName}</b>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-xl p-3.5">
                     <span class="text-slate-400 block mb-1">الأسبوع:</span>
-                    <b class="text-base text-indigo-700">الأسبوع (${esc(r.weekNum)})</b>
+                    <b class="text-base text-indigo-700">الأسبوع (${r.weekNum})</b>
                 </div>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-xl p-4 text-xs">
                 <span class="text-slate-400 font-bold block mb-1.5">سبب طلب الاستعادة للتعديل:</span>
-                <p class="text-sm font-bold text-slate-800 leading-relaxed">${esc(r.reason)}</p>
+                <p class="text-sm font-bold text-slate-800 leading-relaxed">${r.reason}</p>
             </div>
 
             <div class="flex flex-wrap justify-end gap-2 pt-2">
@@ -3734,14 +3573,13 @@ function decideRestoreRequest(reqId, isApproved) {
     if (isApproved) {
         const arch = archiveList.find(x => x.id === r.archId);
         if (arch) {
-            arch.restoreApprovedForUser = r.requestedBy; touch(arch);
+            arch.restoreApprovedForUser = r.requestedBy;
         }
         showPasteToast("تمت الموافقة على الاستعادة ✓", `يمكن للموظف (${r.requestedBy}) الآن استعادة النسخة من الأرشيف وتعديلها`);
     } else {
         showPasteToast("تم رفض طلب الاستعادة", "");
     }
 
-    touch(r);
     if (el('reqRestoreDetailViewer')) {
         el('reqRestoreDetailViewer').innerHTML = `<div class="text-center py-14 text-slate-400 text-xs font-bold">تم تنفيذ القرار — اختر طلباً آخر من القائمة</div>`;
     }
@@ -3752,7 +3590,7 @@ function decideRestoreRequest(reqId, isApproved) {
 }
 
 function resetArchiveSearch() { selectedArchiveWeekFilter = 'ALL'; if (el('archWeekDropdown')) el('archWeekDropdown').value = 'ALL'; if (el('archSearchDate')) el('archSearchDate').value = ''; if (el('archSearchHall')) el('archSearchHall').value = ''; if (el('archiveReportViewer')) el('archiveReportViewer').classList.add('hidden'); getAccessibleArchiveList().forEach(a => openWeekKeys.add(String(a.weekNum || 'غير محدد').trim())); renderArchiveView(); }
-function clearAllArchiveWithWarning() { if (!currentUser?.isAdmin) return; if (confirm("مسح كافة تقارير الأرشيف؟")) { archiveList.forEach(a => markDeleted(a.id)); archiveList = []; activeEditingArchiveId = null; openWeekKeys.clear(); selectedArchiveWeekFilter = ''; if (el('archiveReportViewer')) el('archiveReportViewer').classList.add('hidden'); populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updatePendingApprovalsUI(); renderArchiveView(); recalculateAndRender(true); } }
+function clearAllArchiveWithWarning() { if (!currentUser?.isAdmin) return; if (confirm("مسح كافة تقارير الأرشيف؟")) { archiveList = []; activeEditingArchiveId = null; openWeekKeys.clear(); selectedArchiveWeekFilter = ''; if (el('archiveReportViewer')) el('archiveReportViewer').classList.add('hidden'); populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updatePendingApprovalsUI(); renderArchiveView(); recalculateAndRender(true); } }
 
 function renderArchiveView() {
     populateArchiveDatalistsAndDropdown();
@@ -3780,7 +3618,7 @@ function renderArchiveView() {
                 approvalBadge = `<span class="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] px-2 py-0.5 rounded-full font-black">✕ غير معتمد</span>`;
             }
 
-            const creatorBadge = `<span class="text-[10.5px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-user text-indigo-500 ml-1"></i>أنشأه: ${esc(a.createdBy || 'غير محدد')}</span>`;
+            const creatorBadge = `<span class="text-[10.5px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-user text-indigo-500 ml-1"></i>أنشأه: ${a.createdBy || 'غير محدد'}</span>`;
 
             const canEditCurrentWeek = !isAdmin && hasPerm('canEditCurrentWeekArchive') && String(a.weekNum || '').trim() === curWeek;
             const canStaffRestoreNow = !isAdmin && (canEditCurrentWeek || (a.restoreApprovedForUser && nw(a.restoreApprovedForUser) === nw(currentUser?.name || '')));
@@ -3806,11 +3644,11 @@ function renderArchiveView() {
 
             return `<div class="bg-white border ${st === 'PENDING' ? 'border-amber-400 bg-amber-50/20' : (isEd ? 'border-indigo-500' : 'border-slate-200')} rounded-xl p-3 flex flex-wrap justify-between items-center gap-2">
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <b class="text-sm text-slate-900">${esc(a.hallName)}</b>
-                    <span class="text-xs text-slate-400 mx-1 font-mono" dir="ltr">${esc(a.date)}</span>
+                    <b class="text-sm text-slate-900">${a.hallName}</b>
+                    <span class="text-xs text-slate-400 mx-1 font-mono" dir="ltr">${a.date}</span>
                     ${creatorBadge}
                     ${approvalBadge}
-                    ${a.notes ? `<span class="text-[11px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded">${esc(a.notes)}</span>` : ''}
+                    ${a.notes ? `<span class="text-[11px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded">${a.notes}</span>` : ''}
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5 text-xs">
                     <span class="text-slate-500 font-semibold px-2">مطلوب: ${a.kpis?.tRP || 0} | مسحوب: ${a.kpis?.tSP || 0} | دقة: ${a.kpis?.mP ?? '-'}%</span>
@@ -3818,7 +3656,7 @@ function renderArchiveView() {
                 </div>
             </div>`;
         }).join('');
-        return `<div class="erp-card overflow-hidden"><button type="button" onclick="toggleWeekAccordion('${escAttr(wk)}')" class="w-full px-5 py-3 bg-slate-50 hover:bg-slate-100 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2 text-xs font-black text-slate-800"><div class="flex items-center gap-2"><i class="fa-solid ${isOpen ? 'fa-chevron-up text-indigo-600' : 'fa-chevron-down text-slate-400'}"></i><span>الأسبوع (${esc(wk)})</span><span class="text-slate-500 font-semibold">• مطلوب ${tReq} | مسحوب ${tScn}</span></div><span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full">${esc(list.length)} صالة</span></button><div class="${isOpen ? 'p-3 space-y-2 bg-slate-50/40' : 'hidden'}">${itemsH}</div></div>`;
+        return `<div class="erp-card overflow-hidden"><button type="button" onclick="toggleWeekAccordion('${escAttr(wk)}')" class="w-full px-5 py-3 bg-slate-50 hover:bg-slate-100 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2 text-xs font-black text-slate-800"><div class="flex items-center gap-2"><i class="fa-solid ${isOpen ? 'fa-chevron-up text-indigo-600' : 'fa-chevron-down text-slate-400'}"></i><span>الأسبوع (${wk})</span><span class="text-slate-500 font-semibold">• مطلوب ${tReq} | مسحوب ${tScn}</span></div><span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full">${list.length} صالة</span></button><div class="${isOpen ? 'p-3 space-y-2 bg-slate-50/40' : 'hidden'}">${itemsH}</div></div>`;
     }).join('');
 }
 
@@ -3842,8 +3680,8 @@ function previewArchiveReport(id) {
 
     modalHeader.innerHTML = `
         <div>
-            <h4 class="font-black text-base text-slate-900">معاينة: ${esc(a.hallName)} — الأسبوع (${esc(a.weekNum)})</h4>
-            <p class="text-[11px] text-slate-500 mt-0.5">${esc(a.date)} • أنشأ الطلب: <b>${esc(a.createdBy || 'غير محدد')}</b> • الحالة: <b>${st === 'PENDING' ? 'بانتظار الاعتماد' : (st === 'REJECTED' ? 'غير معتمد ✕' : 'معتمد ✓')}</b></p>
+            <h4 class="font-black text-base text-slate-900">معاينة: ${a.hallName} — الأسبوع (${a.weekNum})</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">${a.date} • أنشأ الطلب: <b>${a.createdBy || 'غير محدد'}</b> • الحالة: <b>${st === 'PENDING' ? 'بانتظار الاعتماد' : (st === 'REJECTED' ? 'غير معتمد ✕' : 'معتمد ✓')}</b></p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             ${adminDecisionBtns}
@@ -3853,16 +3691,16 @@ function previewArchiveReport(id) {
 
     const editAuditHtml = (isAdmin && auditLog.length > 0) ? `
         <div class="mb-4 bg-amber-50/70 border border-amber-300 rounded-xl p-3.5 space-y-2">
-            <h4 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${esc(auditLog.length)}):</h4>
+            <h4 class="font-black text-xs text-amber-950"><i class="fa-solid fa-clock-rotate-left ml-1 text-amber-600"></i> سجل تعديلات الموظفين والتوقيت (${auditLog.length}):</h4>
             <div class="space-y-2">
                 ${auditLog.map(ed => `
                     <div class="bg-white border border-amber-200 rounded-lg p-2.5 text-xs space-y-1">
                         <div class="flex justify-between items-center font-bold text-slate-800">
-                            <span><i class="fa-solid fa-user-pen text-indigo-600 ml-1"></i>${esc(ed.editedBy)}</span>
-                            <span class="font-mono text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded" dir="ltr">${esc(ed.editedAt)}</span>
+                            <span><i class="fa-solid fa-user-pen text-indigo-600 ml-1"></i>${ed.editedBy}</span>
+                            <span class="font-mono text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded" dir="ltr">${ed.editedAt}</span>
                         </div>
                         <ul class="list-disc pr-5 text-[11px] text-slate-700 space-y-0.5">
-                            ${(ed.details || []).map(d => `<li>${esc(d)}</li>`).join('')}
+                            ${(ed.details || []).map(d => `<li>${d}</li>`).join('')}
                         </ul>
                     </div>
                 `).join('')}
@@ -3871,26 +3709,26 @@ function previewArchiveReport(id) {
 
     const swapsBoxHtml = (isAdmin && swaps.length > 0) ? `
         <div class="mb-4 bg-teal-50/60 border border-teal-300 rounded-xl p-3.5 space-y-2">
-            <h4 class="font-black text-xs text-teal-900"><i class="fa-solid fa-shuffle ml-1"></i> سجل الاستبدالات والإجراءات المتخذة (${esc(swaps.length)} حركة):</h4>
+            <h4 class="font-black text-xs text-teal-900"><i class="fa-solid fa-shuffle ml-1"></i> سجل الاستبدالات والإجراءات المتخذة (${swaps.length} حركة):</h4>
             <table class="pro-table w-full bg-white rounded-lg overflow-hidden border border-teal-200">
                 <thead><tr><th class="w-16 text-center">الوقت</th><th class="w-24">المنفّذ</th><th>كود الطلبية</th><th>الكود البديل</th><th class="w-14 text-center">العدد</th><th>نوع وسبب الإجراء</th></tr></thead>
-                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10.5px]">${esc(s.time || '-')}</td><td class="font-bold">${esc(s.user || '-')}</td><td class="font-mono font-bold text-rose-700">${esc(s.orderCode)}</td><td class="font-mono font-bold text-indigo-700">${esc(s.scannedCode)}</td><td class="text-center font-black">${esc(s.qty)}</td><td class="text-[11px] font-semibold text-teal-800">${esc(s.type)}: ${esc(s.reason)}</td></tr>`).join('')}</tbody>
+                <tbody>${swaps.map(s => `<tr><td class="text-center font-mono text-[10.5px]">${s.time || '-'}</td><td class="font-bold">${s.user || '-'}</td><td class="font-mono font-bold text-rose-700">${s.orderCode}</td><td class="font-mono font-bold text-indigo-700">${s.scannedCode}</td><td class="text-center font-black">${s.qty}</td><td class="text-[11px] font-semibold text-teal-800">${s.type}: ${s.reason}</td></tr>`).join('')}</tbody>
             </table>
         </div>` : '';
 
-    const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold">${esc(r.oC)}</td><td class="font-semibold">${esc(r.name)}</td><td class="text-[11px] text-slate-500">${esc(r.sp?.pT || '-')}</td><td class="text-center font-black">${esc(r.req)}</td><td class="text-center font-black text-blue-600">${esc(r.scn)}</td><td class="text-center font-black" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-center font-bold ${r.diff === 0 ? 'text-emerald-600' : (r.diff < 0 ? 'text-rose-600' : 'text-amber-600')}">${r.diff === 0 ? 'مطابق ✓' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${esc(r.diff)})`)}</td></tr>`).join('');
-    const wrongHtml = comp.wI.length > 0 ? `<h4 class="font-black text-xs text-rose-700 mt-4 mb-2">الأكواد الخاطئة (${esc(comp.wI.length)})</h4><table class="pro-table w-full border border-slate-200 rounded-xl overflow-hidden"><thead><tr><th class="w-10 text-center">#</th><th>الكود الخاطئ</th><th>الصنف</th><th>المواصفات</th><th class="w-16 text-center">العدد</th></tr></thead><tbody>${comp.wI.map((w, i) => `<tr class="row-wrong"><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${esc(w.raw)}</td><td>${esc(w.name)}</td><td class="text-[11px]">${esc(w.sp?.pT || '-')}</td><td class="text-center font-black text-rose-600">${esc(w.qty)}</td></tr>`).join('')}</tbody></table>` : '';
+    const rowsHtml = comp.mR.map((r, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold">${r.oC}</td><td class="font-semibold">${r.name}</td><td class="text-[11px] text-slate-500">${r.sp?.pT || '-'}</td><td class="text-center font-black">${r.req}</td><td class="text-center font-black text-blue-600">${r.scn}</td><td class="text-center font-black" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td class="text-center font-bold ${r.diff === 0 ? 'text-emerald-600' : (r.diff < 0 ? 'text-rose-600' : 'text-amber-600')}">${r.diff === 0 ? 'مطابق ✓' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${r.diff})`)}</td></tr>`).join('');
+    const wrongHtml = comp.wI.length > 0 ? `<h4 class="font-black text-xs text-rose-700 mt-4 mb-2">الأكواد الخاطئة (${comp.wI.length})</h4><table class="pro-table w-full border border-slate-200 rounded-xl overflow-hidden"><thead><tr><th class="w-10 text-center">#</th><th>الكود الخاطئ</th><th>الصنف</th><th>المواصفات</th><th class="w-16 text-center">العدد</th></tr></thead><tbody>${comp.wI.map((w, i) => `<tr class="row-wrong"><td class="text-center">${i + 1}</td><td class="font-mono font-bold">${w.raw}</td><td>${w.name}</td><td class="text-[11px]">${w.sp?.pT || '-'}</td><td class="text-center font-black text-rose-600">${w.qty}</td></tr>`).join('')}</tbody></table>` : '';
 
     modalBody.innerHTML = `
         ${editAuditHtml}
         ${swapsBoxHtml}
         <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs mb-3">
-            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المطلوب: <b>${esc(k.tRP)}</b></div>
-            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المسحوب: <b>${esc(k.tSP)}</b></div>
-            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-emerald-800">مطابق: <b>${esc(k.mP)}%</b></div>
-            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">نقص: <b>${esc(k.sS)}</b></div>
-            <div class="bg-amber-50 p-2 rounded-xl border border-amber-200 text-amber-800">زيادة: <b>${esc(k.oS)}</b></div>
-            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">خاطئ: <b>${esc(k.wQT)}</b></div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المطلوب: <b>${k.tRP}</b></div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">المسحوب: <b>${k.tSP}</b></div>
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-emerald-800">مطابق: <b>${k.mP}%</b></div>
+            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">نقص: <b>${k.sS}</b></div>
+            <div class="bg-amber-50 p-2 rounded-xl border border-amber-200 text-amber-800">زيادة: <b>${k.oS}</b></div>
+            <div class="bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-700">خاطئ: <b>${k.wQT}</b></div>
         </div>
         <div class="max-h-[380px] overflow-y-auto border border-slate-200 rounded-xl">
             <table class="pro-table w-full">
@@ -3945,7 +3783,6 @@ function deleteArchiveItem(id) {
     if (!currentUser?.isAdmin) return;
     if (!confirm("حذف هذا التقرير من الأرشيف؟")) return;
     if (activeEditingArchiveId === id) activeEditingArchiveId = null;
-    markDeleted(id);
     archiveList = archiveList.filter(x => x.id !== id);
     if (selectedArchiveId === id && el('archiveReportViewer')) el('archiveReportViewer').classList.add('hidden');
     populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updatePendingApprovalsUI(); renderArchiveView(); recalculateAndRender(true);
@@ -3982,7 +3819,7 @@ function renderQualityAnalyticsDashboard() {
     if (hallSelect) {
         const halls = Array.from(new Set(approvedArchiveList.map(a => (a.hallName || '').trim()).filter(Boolean)));
         const cur = hallSelect.value;
-        hallSelect.innerHTML = `<option value="ALL">كافة الصالات المعتمدة (${esc(approvedArchiveList.length)} تقرير)</option>` + halls.map(h => `<option value="${escAttr(h)}" ${cur === h ? 'selected' : ''}>${esc(h)}</option>`).join('');
+        hallSelect.innerHTML = `<option value="ALL">كافة الصالات المعتمدة (${approvedArchiveList.length} تقرير)</option>` + halls.map(h => `<option value="${escAttr(h)}" ${cur === h ? 'selected' : ''}>${h}</option>`).join('');
     }
 
     const targetArchives = approvedArchiveList.filter(a => selectedHall === 'ALL' || (a.hallName || '').trim() === selectedHall);
@@ -4053,7 +3890,7 @@ function renderQualityAnalyticsDashboard() {
             }
         });
 
-        if (k.tOI >= 3 && k.mP < 70) anomalies.push({ severity: 'HIGH', type: 'انخفاض حاد بالدقة', title: `${hName} (${wkLabel}) — دقة ${esc(k.mP)}%`, detail: `مطلوب ${esc(k.tRP)} | مسحوب ${esc(k.tSP)} | نقص ${esc(k.sS)}`, archId: arch.id });
+        if (k.tOI >= 3 && k.mP < 70) anomalies.push({ severity: 'HIGH', type: 'انخفاض حاد بالدقة', title: `${hName} (${wkLabel}) — دقة ${k.mP}%`, detail: `مطلوب ${k.tRP} | مسحوب ${k.tSP} | نقص ${k.sS}`, archId: arch.id });
         else if (k.tRP >= 10 && (k.sS / k.tRP) >= 0.25) anomalies.push({ severity: 'HIGH', type: 'نسبة نقص شاذة', title: `${hName} (${wkLabel}) — نقص ${Math.round((k.sS / k.tRP) * 100)}%`, detail: `عجز ${k.sS} قطعة من أصل ${k.tRP}`, archId: arch.id });
         if (k.wQT >= 8 || (k.tSP >= 10 && (k.wQT / k.tSP) >= 0.15)) anomalies.push({ severity: 'WARN', type: 'تراكم أكواد خاطئة', title: `${hName} (${wkLabel}) — ${k.wQT} قطعة خاطئة`, detail: `${k.wTC} كود غير مطلوب بالطلبية`, archId: arch.id });
     });
@@ -4064,7 +3901,7 @@ function renderQualityAnalyticsDashboard() {
             h.orders.forEach(o => {
                 const vol = o.req > 0 ? o.req : o.scn;
                 if (avg >= 10 && vol >= avg * 1.75 && (vol - avg) >= 15) anomalies.push({ severity: 'SPIKE', type: 'طفرة سحب للصالة', title: `${h.hall} (${o.week}) — ${vol} قطعة`, detail: `زيادة +${Math.round(((vol - avg) / avg) * 100)}% فوق المتوسط (${Math.round(avg)})`, archId: o.id });
-                else if (avg >= 25 && vol > 0 && vol <= avg * 0.4) anomalies.push({ severity: 'DROP', type: 'هبوط حاد للطلب', title: `${esc(h.hall)} (${esc(o.week)}) — ${vol} قطعة`, detail: `انخفاض -${Math.round(((avg - vol) / avg) * 100)}% عن المتوسط (${Math.round(avg)})`, archId: o.id });
+                else if (avg >= 25 && vol > 0 && vol <= avg * 0.4) anomalies.push({ severity: 'DROP', type: 'هبوط حاد للطلب', title: `${h.hall} (${o.week}) — ${vol} قطعة`, detail: `انخفاض -${Math.round(((avg - vol) / avg) * 100)}% عن المتوسط (${Math.round(avg)})`, archId: o.id });
             });
         }
     });
@@ -4106,7 +3943,7 @@ function renderQualityAnalyticsDashboard() {
             <div class="erp-card p-4 flex justify-between items-center"><div><span class="text-[11px] font-bold text-slate-500">إجمالي المطلوب / المسحوب</span><p class="text-lg font-black mt-0.5">${totalReqPieces.toLocaleString()} <span class="text-xs text-indigo-600">/ ${totalScannedPieces.toLocaleString()}</span></p><span class="text-[10px] text-slate-400">تغطية فعلية: ${fulfillmentRate}%</span></div><div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-boxes-stacked"></i></div></div>
             <div class="erp-card p-4 flex justify-between items-center"><div><span class="text-[11px] font-bold text-slate-500">الطلبيات المعتمدة</span><p class="text-lg font-black mt-0.5">${totalOrders}</p><span class="text-[10px] text-slate-400">معدل ${avgPiecesPerOrder} قطعة/طلبية</span></div><div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-file-invoice"></i></div></div>
             <div class="erp-card p-4 flex justify-between items-center"><div><span class="text-[11px] font-bold text-slate-500">دقة التحضير العامة</span><p class="text-lg font-black text-emerald-600 mt-0.5">${overallMatchPct}%</p><span class="text-[10px] text-slate-400">نقص ${totalShortagePieces} • زيادة ${totalOveragePieces}</span></div><div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div></div>
-            <div onclick="switchAnalyticsSubTab('anomalies')" class="erp-card p-4 flex justify-between items-center cursor-pointer hover:border-amber-400"><div><span class="text-[11px] font-bold text-slate-500">الحالات الشاذة / الخاطئ</span><p class="text-lg font-black ${anomalies.length > 0 ? 'text-amber-600' : 'text-emerald-600'} mt-0.5">${esc(anomalies.length)} <span class="text-xs text-rose-500">(${totalWrongPieces} خاطئ)</span></p><span class="text-[10px] text-slate-400">انقر للتفاصيل</span></div><div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div></div>
+            <div onclick="switchAnalyticsSubTab('anomalies')" class="erp-card p-4 flex justify-between items-center cursor-pointer hover:border-amber-400"><div><span class="text-[11px] font-bold text-slate-500">الحالات الشاذة / الخاطئ</span><p class="text-lg font-black ${anomalies.length > 0 ? 'text-amber-600' : 'text-emerald-600'} mt-0.5">${anomalies.length} <span class="text-xs text-rose-500">(${totalWrongPieces} خاطئ)</span></p><span class="text-[10px] text-slate-400">انقر للتفاصيل</span></div><div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div></div>
         `;
     }
 
@@ -4117,21 +3954,21 @@ function renderQualityAnalyticsDashboard() {
         else { el('analyticsEmptyState').classList.add('hidden'); switchAnalyticsSubTab(activeAnalyticsSubTab); }
     }
 
-    if (el('analyticsSizeSummaryRow')) el('analyticsSizeSummaryRow').innerHTML = topSizesList.length > 0 ? `<span class="text-slate-400 font-bold ml-1">المقاسات:</span>` + topSizesList.map(([sz, qty]) => `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">${esc(sz)} (${qty})</span>`).join('') : '';
+    if (el('analyticsSizeSummaryRow')) el('analyticsSizeSummaryRow').innerHTML = topSizesList.length > 0 ? `<span class="text-slate-400 font-bold ml-1">المقاسات:</span>` + topSizesList.map(([sz, qty]) => `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">${sz} (${qty})</span>`).join('') : '';
 
-    if (el('analyticsHallsVolumeTbody')) el('analyticsHallsVolumeTbody').innerHTML = hallsList.length > 0 ? hallsList.map((h, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-bold">${esc(h.hall)}</td><td class="text-center font-semibold">${esc(h.ordersCount)}</td><td class="text-center font-black">${esc(h.totalReq)}</td><td class="text-center font-black text-indigo-600">${esc(h.totalScn)}</td><td class="text-center text-slate-500">${esc(h.avgOrder)}</td><td class="text-center font-bold text-rose-600">${esc(h.totalWrong)}</td><td class="text-center"><span class="px-2 py-0.5 rounded-full text-[10.5px] font-black ${h.pct >= 90 ? 'bg-emerald-50 text-emerald-700' : (h.pct >= 75 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700')}">${esc(h.pct)}%</span></td></tr>`).join('') : `<tr><td colspan="8" class="text-center py-8 text-slate-400">لا توجد بيانات</td></tr>`;
+    if (el('analyticsHallsVolumeTbody')) el('analyticsHallsVolumeTbody').innerHTML = hallsList.length > 0 ? hallsList.map((h, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-bold">${h.hall}</td><td class="text-center font-semibold">${h.ordersCount}</td><td class="text-center font-black">${h.totalReq}</td><td class="text-center font-black text-indigo-600">${h.totalScn}</td><td class="text-center text-slate-500">${h.avgOrder}</td><td class="text-center font-bold text-rose-600">${h.totalWrong}</td><td class="text-center"><span class="px-2 py-0.5 rounded-full text-[10.5px] font-black ${h.pct >= 90 ? 'bg-emerald-50 text-emerald-700' : (h.pct >= 75 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700')}">${h.pct}%</span></td></tr>`).join('') : `<tr><td colspan="8" class="text-center py-8 text-slate-400">لا توجد بيانات</td></tr>`;
 
     if (el('analyticsAnomaliesCount')) el('analyticsAnomaliesCount').textContent = anomalies.length;
     if (el('analyticsAnomaliesBody')) {
         el('analyticsAnomaliesBody').innerHTML = anomalies.length === 0 ? `<div class="md:col-span-3 text-center py-6 text-xs font-bold text-emerald-700 bg-emerald-50/50 rounded-xl">الأداء مستقر تماماً — لم يتم رصد حالات شاذة ✓</div>` : anomalies.map(an => {
             const bc = { 'HIGH': 'border-r-rose-500', 'WARN': 'border-r-orange-500', 'SPIKE': 'border-r-amber-500', 'DROP': 'border-r-sky-500' };
             const bg = { 'HIGH': 'bg-rose-50 text-rose-700', 'WARN': 'bg-orange-50 text-orange-700', 'SPIKE': 'bg-amber-50 text-amber-800', 'DROP': 'bg-sky-50 text-sky-700' };
-            return `<div onclick="jumpToArchivedReportFromAnalytics('${escAttr(an.archId)}')" class="cursor-pointer hover:shadow-md transition-all bg-white border border-slate-200 border-r-4 ${bc[an.severity] || ''} rounded-xl p-3.5 space-y-1"><div class="flex justify-between items-center"><span class="text-[10px] font-black px-2 py-0.5 rounded-md ${bg[an.severity] || ''}">${esc(an.type)}</span><span class="text-[10px] text-slate-400">معاينة ↗</span></div><div class="font-bold text-xs text-slate-900">${esc(an.title)}</div><div class="text-[11px] text-slate-500">${esc(an.detail)}</div></div>`;
+            return `<div onclick="jumpToArchivedReportFromAnalytics('${escAttr(an.archId)}')" class="cursor-pointer hover:shadow-md transition-all bg-white border border-slate-200 border-r-4 ${bc[an.severity] || ''} rounded-xl p-3.5 space-y-1"><div class="flex justify-between items-center"><span class="text-[10px] font-black px-2 py-0.5 rounded-md ${bg[an.severity] || ''}">${an.type}</span><span class="text-[10px] text-slate-400">معاينة ↗</span></div><div class="font-bold text-xs text-slate-900">${an.title}</div><div class="text-[11px] text-slate-500">${an.detail}</div></div>`;
         }).join('');
     }
 
     if (el('analyticsUnknownCodesCount')) el('analyticsUnknownCodesCount').textContent = unknownList.length;
-    if (el('analyticsUnknownCodesTbody')) el('analyticsUnknownCodesTbody').innerHTML = unknownList.length > 0 ? unknownList.map((u, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold text-rose-700">${esc(u.code)}</td><td class="text-center font-mono">${esc(u.story)}</td><td class="text-center font-black text-rose-600">${esc(u.totalQty)} <span class="text-[10px] text-slate-400">(${esc(u.appearances)}×)</span></td><td class="text-center"><button type="button" onclick="quickAddUnknownCodeToCatalog('${escAttr(u.code)}')" class="btn-soft !py-0.5 !text-[10px] !text-sky-700">+ تعريف</button></td></tr>`).join('') : `<tr><td colspan="5" class="text-center py-6 text-emerald-700 font-bold">جميع الأكواد المسحوبة معرّفة ✓</td></tr>`;
+    if (el('analyticsUnknownCodesTbody')) el('analyticsUnknownCodesTbody').innerHTML = unknownList.length > 0 ? unknownList.map((u, i) => `<tr><td class="text-center text-slate-400">${i + 1}</td><td class="font-mono font-bold text-rose-700">${u.code}</td><td class="text-center font-mono">${u.story}</td><td class="text-center font-black text-rose-600">${u.totalQty} <span class="text-[10px] text-slate-400">(${u.appearances}×)</span></td><td class="text-center"><button type="button" onclick="quickAddUnknownCodeToCatalog('${escAttr(u.code)}')" class="btn-soft !py-0.5 !text-[10px] !text-sky-700">+ تعريف</button></td></tr>`).join('') : `<tr><td colspan="5" class="text-center py-6 text-emerald-700 font-bold">جميع الأكواد المسحوبة معرّفة ✓</td></tr>`;
 
     renderAnalyticsClassifiedItemsTable();
     if (totalOrders > 0 && activeAnalyticsSubTab === 'overview') renderAnalyticsCharts(cachedAnalyticsData);
@@ -4151,26 +3988,26 @@ function renderAnalyticsClassifiedItemsTable() {
         const list = d.topDemandList.filter(s => !q || `${s.story} ${s.name}`.toLowerCase().includes(q)).slice(0, 50);
         tbody.innerHTML = list.length > 0 ? list.map((s, i) => {
             const vol = s.totalReq > 0 ? s.totalReq : s.totalScn, pct = ((vol / totalBase) * 100).toFixed(1);
-            return `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-indigo-600">${esc(s.story)}</td><td class="font-bold">${esc(s.name)}</td><td class="text-center text-slate-500">${esc(s.ordersCount)}</td><td class="text-center font-black">${esc(s.totalReq)}</td><td class="text-center font-black text-blue-600">${esc(s.totalScn)}</td><td class="text-center"><div class="text-[11px] font-bold">${pct}%</div><div class="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden"><div class="bg-indigo-500 h-1.5 rounded-full" style="width:${Math.min(100, parseFloat(pct) * 3)}%"></div></div></td></tr>`;
+            return `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-indigo-600">${s.story}</td><td class="font-bold">${s.name}</td><td class="text-center text-slate-500">${s.ordersCount}</td><td class="text-center font-black">${s.totalReq}</td><td class="text-center font-black text-blue-600">${s.totalScn}</td><td class="text-center"><div class="text-[11px] font-bold">${pct}%</div><div class="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden"><div class="bg-indigo-500 h-1.5 rounded-full" style="width:${Math.min(100, parseFloat(pct) * 3)}%"></div></div></td></tr>`;
         }).join('') : `<tr><td colspan="7" class="text-center py-8 text-slate-400">لا توجد نتائج</td></tr>`;
     } else if (activeAnalyticsItemClass === 'most_accurate') {
         if (titleEl) titleEl.textContent = "الأصناف الأكثر دقة في التجهيز والمطابقة";
         if (descEl) descEl.textContent = "الأصناف الأعلى التزاماً ومطابقة بنسبة 100% أو الأقرب لها";
         thead.innerHTML = `<tr><th class="w-10 text-center">#</th><th class="w-20 text-center">القصة</th><th>اسم الصنف</th><th class="w-20 text-center">الطلبيات</th><th class="w-20 text-center">المطلوب</th><th class="w-20 text-center">مرات الخطأ</th><th class="w-24 text-center">نسبة الدقة</th></tr>`;
         const list = d.mostAccurateList.filter(s => !q || `${s.story} ${s.name}`.toLowerCase().includes(q)).slice(0, 50);
-        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-emerald-700">${esc(s.story)}</td><td class="font-bold">${esc(s.name)}</td><td class="text-center text-slate-500">${esc(s.ordersCount)}</td><td class="text-center font-black">${esc(s.totalReq)}</td><td class="text-center font-semibold ${s.errorEvents === 0 ? 'text-emerald-600' : 'text-amber-600'}">${esc(s.errorEvents)}</td><td class="text-center"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${s.accuracyPct >= 95 ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}">${esc(s.accuracyPct)}%</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-slate-400">لا توجد نتائج</td></tr>`;
+        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-emerald-700">${s.story}</td><td class="font-bold">${s.name}</td><td class="text-center text-slate-500">${s.ordersCount}</td><td class="text-center font-black">${s.totalReq}</td><td class="text-center font-semibold ${s.errorEvents === 0 ? 'text-emerald-600' : 'text-amber-600'}">${s.errorEvents}</td><td class="text-center"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${s.accuracyPct >= 95 ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}">${s.accuracyPct}%</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-slate-400">لا توجد نتائج</td></tr>`;
     } else if (activeAnalyticsItemClass === 'most_errors') {
         if (titleEl) titleEl.textContent = "الأصناف الأكثر خطأً وتكراراً في الفروقات";
         if (descEl) descEl.textContent = "الأصناف التي تسجل أعلى عدد من قطع النقص أو الزيادة أو السحب بأكواد خاطئة";
         thead.innerHTML = `<tr><th class="w-10 text-center">#</th><th class="w-20 text-center">القصة</th><th>اسم الصنف</th><th class="w-20 text-center">مرات الخطأ</th><th class="w-24 text-center">نقص / زيادة</th><th class="w-20 text-center">خاطئ</th><th class="w-24 text-center">إجمالي الخطأ</th></tr>`;
         const list = d.mostErrorsList.filter(s => !q || `${s.story} ${s.name}`.toLowerCase().includes(q)).slice(0, 50);
-        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-rose-700">${esc(s.story)}</td><td class="font-bold">${esc(s.name)}</td><td class="text-center font-bold text-amber-700">${esc(s.errorEvents)}</td><td class="text-center text-[11px]"><span class="text-rose-600 font-bold">-${esc(s.totalShortage)}</span> / <span class="text-amber-600 font-bold">+${esc(s.totalOverage)}</span></td><td class="text-center font-bold text-rose-600">${esc(s.totalWrong)}</td><td class="text-center"><span class="bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-full font-black text-[11px]">${esc(s.totalErrorPieces)} قطعة</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-emerald-600 font-bold">لا توجد أخطاء مسجلة ✓</td></tr>`;
+        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-rose-700">${s.story}</td><td class="font-bold">${s.name}</td><td class="text-center font-bold text-amber-700">${s.errorEvents}</td><td class="text-center text-[11px]"><span class="text-rose-600 font-bold">-${s.totalShortage}</span> / <span class="text-amber-600 font-bold">+${s.totalOverage}</span></td><td class="text-center font-bold text-rose-600">${s.totalWrong}</td><td class="text-center"><span class="bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-full font-black text-[11px]">${s.totalErrorPieces} قطعة</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-emerald-600 font-bold">لا توجد أخطاء مسجلة ✓</td></tr>`;
     } else if (activeAnalyticsItemClass === 'chronic_shortage') {
         if (titleEl) titleEl.textContent = "أصناف العجز والنقص المزمن والمتكرر";
         if (descEl) descEl.textContent = "الأصناف التي يتكرر فيها عدم توفر الكمية المطلوبة في المستودع";
         thead.innerHTML = `<tr><th class="w-10 text-center">#</th><th class="w-20 text-center">القصة</th><th>اسم الصنف</th><th class="w-20 text-center">مرات النقص</th><th class="w-20 text-center">المطلوب</th><th class="w-20 text-center">إجمالي النقص</th><th class="w-24 text-center">نسبة العجز</th></tr>`;
         const list = d.chronicShortageList.filter(s => !q || `${s.story} ${s.name}`.toLowerCase().includes(q)).slice(0, 50);
-        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-amber-700">${esc(s.story)}</td><td class="font-bold">${esc(s.name)}</td><td class="text-center font-black text-amber-700">${esc(s.shortageEvents)}</td><td class="text-center font-bold">${esc(s.totalReq)}</td><td class="text-center font-black text-rose-600">-${esc(s.totalShortage)}</td><td class="text-center"><span class="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-full font-black text-[11px]">${esc(s.shortageRatePct)}%</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-emerald-600 font-bold">لا توجد أصناف تعاني من عجز ✓</td></tr>`;
+        tbody.innerHTML = list.length > 0 ? list.map((s, i) => `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-amber-700">${s.story}</td><td class="font-bold">${s.name}</td><td class="text-center font-black text-amber-700">${s.shortageEvents}</td><td class="text-center font-bold">${s.totalReq}</td><td class="text-center font-black text-rose-600">-${s.totalShortage}</td><td class="text-center"><span class="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-full font-black text-[11px]">${s.shortageRatePct}%</span></td></tr>`).join('') : `<tr><td colspan="7" class="text-center py-8 text-emerald-600 font-bold">لا توجد أصناف تعاني من عجز ✓</td></tr>`;
     } else if (activeAnalyticsItemClass === 'sizes_colors') {
         if (titleEl) titleEl.textContent = "المقاسات والألوان الأكثر سحباً وطلباً";
         if (descEl) descEl.textContent = "تحليل التركيبات الأكثر حركة من حيث المقاس واللون لدعم قرارات الشراء والتوزيع";
@@ -4178,7 +4015,7 @@ function renderAnalyticsClassifiedItemsTable() {
         const list = d.sizeColorList.filter(s => !q || `${s.size} ${s.color}`.toLowerCase().includes(q)).slice(0, 50);
         tbody.innerHTML = list.length > 0 ? list.map((s, i) => {
             const vol = s.req > 0 ? s.req : s.scn, pct = ((vol / totalBase) * 100).toFixed(1);
-            return `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-sky-700">${esc(s.size)}</td><td class="font-bold">${esc(s.color)}</td><td class="text-center text-slate-500">${esc(s.ordersCount)}</td><td class="text-center font-black">${esc(s.req)}</td><td class="text-center font-black text-indigo-600">${esc(s.scn)}</td><td class="text-center font-bold text-slate-700">${pct}%</td></tr>`;
+            return `<tr><td class="text-center text-slate-400 font-bold">${i + 1}</td><td class="text-center font-mono font-black text-sky-700">${s.size}</td><td class="font-bold">${s.color}</td><td class="text-center text-slate-500">${s.ordersCount}</td><td class="text-center font-black">${s.req}</td><td class="text-center font-black text-indigo-600">${s.scn}</td><td class="text-center font-bold text-slate-700">${pct}%</td></tr>`;
         }).join('') : `<tr><td colspan="7" class="text-center py-8 text-slate-400">لا توجد بيانات مقاسات وألوان</td></tr>`;
     }
 }
@@ -4252,16 +4089,21 @@ function quickAddUnknownCodeToCatalog(code) {
     showPasteToast("تم التعريف ✓", `أضيف (${c}) لقاعدة الأصناف`);
 }
 
-// ================= 17. [التعديل 4] المزامنة السحابية المنفصلة والسريعة =================
+// ================= 17. المزامنة السحابية التلقائية السريعة =================
 function getFullDatabasePayload(lightStaffMode = false) {
     if (lightStaffMode) {
-        return { lightStaffUpdate: true, timestamp: new Date().toISOString(), archiveList, restoreRequestsList, staffLiveLocations, tombstones };
+        return {
+            lightStaffUpdate: true,
+            timestamp: new Date().toISOString(),
+            archiveList,
+            restoreRequestsList,
+            staffLiveLocations
+        };
     }
     return {
         timestamp: new Date().toISOString(), dbVersion: (currentDbVersion || 51) + 1, labelsLocked: isLabelsLocked, customLabels: customLabelsMap,
         catalogList, shortcutList, orderData, palmData, archiveList, restoreRequestsList, activeEditingArchiveId,
-        hallLocationsList, staffLiveLocations, tombstones,
-        _syncMeta: { catalogSig: lastSyncedCatalogSig, cloudVer: lastCloudDbVersion, catalogVer: lastCloudCatalogVer },
+        hallLocationsList, staffLiveLocations,
         logo: el('logoImg') && !el('logoImg').classList.contains('hidden') ? el('logoImg').src : (localStorage.getItem('company400_logo') || ""),
         settings: appSettings
     };
@@ -4269,7 +4111,6 @@ function getFullDatabasePayload(lightStaffMode = false) {
 
 async function applyImportedDatabasePayload(data, isSilentCloud = false) {
     if (!data) return;
-    sanitizeDeep(data);
     if (Array.isArray(data.catalogList) && data.catalogList.length > 0) {
         currentDbVersion = data.dbVersion || (currentDbVersion + 1);
         catalogList = (data.catalogList || []).map(item => nCat(item));
@@ -4289,7 +4130,7 @@ async function applyImportedDatabasePayload(data, isSilentCloud = false) {
         orderData = data.orderData || [];
         palmData = data.palmData || [];
         activeEditingArchiveId = data.activeEditingArchiveId || null;
-    } else if (currentUser?.isAdmin && orderData.length === 0 && palmData.length === 0 && Array.isArray(data.orderData)) {
+   } else if (currentUser?.isAdmin && orderData.length === 0 && palmData.length === 0 && Array.isArray(data.orderData)) {
         orderData = data.orderData || [];
         palmData = data.palmData || [];
     }
@@ -4300,12 +4141,6 @@ async function applyImportedDatabasePayload(data, isSilentCloud = false) {
     }
     if (data.logo && el('logoImg')) { el('logoImg').src = data.logo; el('logoImg').classList.remove('hidden'); if (el('logoPlaceholder')) el('logoPlaceholder').classList.add('hidden'); localStorage.setItem('company400_logo', data.logo); }
 
-    if (Array.isArray(data.catalogList) && data.catalogList.length > 0) {
-        lastSyncedCatalogSig = catalogSig();
-        lastCloudDbVersion = Math.max(lastCloudDbVersion, Number(data.dbVersion) || 0);
-        lastCloudCatalogVer = Math.max(lastCloudCatalogVer, Number(data.catalogVersion) || 0);
-    }
-    if (data.tombstones && typeof data.tombstones === 'object') tombstones = { ...tombstones, ...data.tombstones };
     await saveToIndexedDB(getFullDatabasePayload(false));
     applyRolePermissionsUI(); applyThemeUI(); setupEditableLabelsSystem();
     rebuildLookups(); filterAndRenderCatalog(); filterAndRenderShortcuts();
@@ -4326,274 +4161,41 @@ function triggerAutoCloudSave() {
     }, 2500);
 }
 
-function cloudDataSig() {
-    const f = a => (a || []).map(x => x && (x.id + ':' + (x.updatedAt || 0))).join(',');
-    const loc = Object.keys(staffLiveLocations || {}).map(k => k + ':' + ((staffLiveLocations[k] || {}).updatedAt || '')).join(',');
-    return [f(archiveList), f(restoreRequestsList), f(hallLocationsList), f(appSettings.usersList), loc, catalogList.length, shortcutList.length].join('|');
-}
-
-function mergeCloudPayload(json, opts = {}) {
-    const out = { catalogConflict: false, catalogReplaced: false, workingLoaded: false };
-    if (!json || typeof json !== 'object') return out;
-    sanitizeDeep(json);
-    if (json.tombstones && typeof json.tombstones === 'object') {
-        Object.keys(json.tombstones).forEach(k => { const v = Number(json.tombstones[k]) || 0; if (!tombstones[k] || tombstones[k] < v) tombstones[k] = v; });
-    }
-    if (Array.isArray(json.archiveList)) archiveList = sortIdDesc(mergeById(archiveList, json.archiveList, tombstones));
-    else archiveList = archiveList.filter(a => !tombstones[a.id]);
-    if (Array.isArray(json.restoreRequestsList)) restoreRequestsList = sortIdDesc(mergeById(restoreRequestsList, json.restoreRequestsList, tombstones));
-    if (Array.isArray(json.hallLocationsList)) hallLocationsList = mergeById(hallLocationsList, json.hallLocationsList, tombstones);
-
-    if (json.settings && Array.isArray(json.settings.usersList) && json.settings.usersList.length > 0) {
-        appSettings.usersList = mergeById(appSettings.usersList, json.settings.usersList, tombstones);
-        ensureUsersListInitialized();
-        if (currentUser) {
-            const fresh = appSettings.usersList.find(u => u.id === currentUser.id);
-            if (fresh) currentUser = fresh;
-        }
-    }
-
-    if (json.staffLiveLocations && typeof json.staffLiveLocations === 'object') {
-        Object.keys(json.staffLiveLocations).forEach(k => {
-            const r = json.staffLiveLocations[k], l = staffLiveLocations[k];
-            if (!r || typeof r.lat !== 'number' || typeof r.lng !== 'number') return;
-            if (!l || tsOf(r.updatedAt) > tsOf(l.updatedAt)) staffLiveLocations[k] = r;
-        });
-    }
-
-    const cloudVer = Number(json.dbVersion) || 0;
-    const cloudCatVer = Number(json.catalogVersion) || 0;
-    lastCloudDbVersion = Math.max(lastCloudDbVersion, cloudVer);
-    currentDbVersion = Math.max(currentDbVersion, cloudVer);
-
-    if (!json.catalogUnchanged && Array.isArray(json.catalogList)) {
-        const shouldApply = (cloudCatVer > lastCloudCatalogVer) || (catalogList.length === 0 && json.catalogList.length > 0);
-        if (shouldApply) {
-            const dirty = catalogList.length > 0 && catalogSig() !== lastSyncedCatalogSig;
-            if (!dirty) {
-                catalogList = json.catalogList.map(item => nCat(item));
-                if (Array.isArray(json.shortcutList)) shortcutList = json.shortcutList;
-                if (json.customLabels && typeof json.customLabels === 'object') customLabelsMap = json.customLabels;
-                if (json.logo && el('logoImg')) {
-                    el('logoImg').src = json.logo;
-                    el('logoImg').classList.remove('hidden');
-                    if (el('logoPlaceholder')) el('logoPlaceholder').classList.add('hidden');
-                    localStorage.setItem('company400_logo', json.logo);
-                }
-                lastSyncedCatalogSig = catalogSig();
-                lastCloudCatalogVer = Math.max(lastCloudCatalogVer, cloudCatVer);
-                out.catalogReplaced = true;
-            } else {
-                out.catalogConflict = true;
-            }
-        }
-    } else if (cloudCatVer > 0) {
-        lastCloudCatalogVer = Math.max(lastCloudCatalogVer, cloudCatVer);
-    }
-
-    if (opts.loadWorking && currentUser?.isAdmin && orderData.length === 0 && palmData.length === 0 && Array.isArray(json.orderData) && json.orderData.length > 0) {
-        orderData = json.orderData; palmData = Array.isArray(json.palmData) ? json.palmData : []; out.workingLoaded = true;
-    }
-    return out;
-}
-
-async function refreshUIAfterCloudChange() {
-    await saveToIndexedDB(getFullDatabasePayload(false));
-    ensureUsersListInitialized(); applyRolePermissionsUI(); setupEditableLabelsSystem();
-    rebuildLookups(); filterAndRenderCatalog(); filterAndRenderShortcuts();
-    populateArchiveDatalistsAndDropdown(); updateEditingArchiveBannerUI(); updatePendingApprovalsUI();
-    if (activeTab === 'requests' && currentUser?.isAdmin) renderManagerRequestsCenter();
-    if (activeTab === 'archive') renderArchiveView();
-    if (activeTab === 'hallsmap' && currentUser?.isAdmin) renderAdminHallsMap();
-    recalculateAndRender(false);
-}
-
-async function postCloudAction(url, bodyObj, timeoutMs = 45000) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ ...bodyObj, token: sessionToken }),
-            signal: ctrl.signal
-        });
-        const rawText = await res.text();
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        let json;
-        try {
-            json = JSON.parse(rawText);
-        } catch (parseErr) {
-            if (rawText.includes('<html') || rawText.includes('<!DOCTYPE')) {
-                throw new Error('الخادم أعاد صفحة HTML — تحقق من إعدادات النشر (Anyone / أي شخص)');
-            }
-            throw new Error('استجابة غير صالحة من السحابة');
-        }
-
-        if (json && json.unauthorized) {
-            alert(json.error || "انتهت صلاحية الجلسة، يرجى إعادة تسجيل الدخول.");
-            logoutCurrentUser();
-            throw new Error('unauthorized');
-        }
-        return json;
-    } catch (err) {
-        if (err && err.name === 'AbortError') {
-            throw new Error('انتهت مهلة الاتصال بالسحابة (تأخر استجابة الخادم)');
-        }
-        throw err;
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
 async function syncToExternalCloud(isSilent = false, allowStaffArchivePush = false, lightStaffMode = false) {
-    if (!sessionToken || (!currentUser?.isAdmin && !allowStaffArchivePush)) return;
+    if (!currentUser?.isAdmin && !allowStaffArchivePush) return;
     const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
     if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return; }
-    if (syncInFlight) { queuedPush = { isSilent, allowStaffArchivePush, lightStaffMode }; return; }
-    syncInFlight = true;
     setCloudStatusPill("جاري المزامنة...", "text-amber-600");
     if (!isSilent) showPasteToast("جاري الرفع ⏳", "يرجى الانتظار...");
     try {
-        const getRes = await postCloudAction(url, {
-            action: "GET_DB",
-            needCatalog: catalogList.length === 0,
-            clientCatalogVer: lastCloudCatalogVer
-        });
-        const cloud = (getRes && getRes.ok && getRes.data) ? getRes.data : {};
-        const before = cloudDataSig();
-        const m = mergeCloudPayload(cloud, { loadWorking: false });
-        if (before !== cloudDataSig() || m.catalogReplaced) await refreshUIAfterCloudChange();
-
-        const payload = getFullDatabasePayload(lightStaffMode);
-        delete payload._syncMeta;
-        let pushedCatalog = false;
-
-        if (!lightStaffMode) {
-            const sig = catalogSig();
-            let force = false;
-            if (m.catalogConflict) {
-                if (!isSilent) {
-                    force = confirm("تعارض: قاعدة الأصناف على السحابة أحدث من نسختك المحلية.\n\nموافق = استبدال السحابة بنسختك المحلية\nإلغاء = الإبقاء على قاعدة السحابة");
-                }
-                if (!force && Array.isArray(cloud.catalogList)) {
-                    catalogList = cloud.catalogList.map(item => nCat(item));
-                    if (Array.isArray(cloud.shortcutList)) shortcutList = cloud.shortcutList;
-                    lastSyncedCatalogSig = catalogSig();
-                    lastCloudCatalogVer = Math.max(lastCloudCatalogVer, Number(cloud.catalogVersion) || 0);
-                    await refreshUIAfterCloudChange();
-                }
-            }
-
-            if (sig !== lastSyncedCatalogSig || force || (Number(cloud.catalogVersion) === 0 && catalogList.length > 0)) {
-                pushedCatalog = true;
-            } else {
-                delete payload.catalogList;
-                delete payload.shortcutList;
-            }
-
-            if (logoDirty || (pushedCatalog && payload.logo)) {
-                payload.logoChanged = true;
-            } else {
-                delete payload.logo;
-            }
-
-            payload.dbVersion = Math.max(lastCloudDbVersion, Number(cloud.dbVersion) || 0, currentDbVersion || 51) + 1;
-        }
-
-        const saveRes = await postCloudAction(url, { action: "SAVE_DB", payload });
-        if (!saveRes || !saveRes.ok) {
-            if (saveRes && saveRes.conflict) {
-                needsPush = { isSilent: true, allowStaffArchivePush, lightStaffMode };
-                setCloudStatusPill("تعارض نسخة — أعد المزامنة", "text-amber-600");
-                if (!isSilent) showPasteToast("تعارض نسخة ⚠", saveRes.error || "يوجد تحديث أحدث على السحابة");
-                return;
-            }
-            throw new Error((saveRes && saveRes.error) || "فشل الحفظ في السحابة");
-        }
-
-        needsPush = null;
-        logoDirty = false;
-        if (saveRes.dbVersion) {
-            lastCloudDbVersion = Math.max(lastCloudDbVersion, Number(saveRes.dbVersion) || 0);
-            currentDbVersion = Math.max(currentDbVersion, lastCloudDbVersion);
-        }
-        if (saveRes.catalogVersion !== undefined) {
-            lastCloudCatalogVer = Math.max(lastCloudCatalogVer, Number(saveRes.catalogVersion) || 0);
-        }
-        if (pushedCatalog) lastSyncedCatalogSig = catalogSig();
-
-        await saveToIndexedDB(getFullDatabasePayload(false));
-        setCloudStatusPill("متصل بالسحابة ✓", "text-emerald-600");
-        if (!isSilent) showPasteToast("تم الحفظ في السحابة ✓", "تمت المزامنة بنجاح");
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(getFullDatabasePayload(lightStaffMode)) });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        setCloudStatusPill("متزامن ✓", "text-emerald-600 font-bold");
+        if (!isSilent) showPasteToast("تم الحفظ السحابي ☁️✓", "تم تحديث البيانات في السحابة بنجاح");
     } catch (err) {
-        console.error("Cloud sync error:", err);
-        needsPush = { isSilent: true, allowStaffArchivePush, lightStaffMode };
-        setCloudStatusPill("تعذر الاتصال بالسحابة", "text-rose-600");
-        if (!isSilent && err?.message !== 'unauthorized') {
-            showPasteToast("تعذر الرفع للسحابة ⚠", err?.message || "حُفظت محلياً وستُرفع عند عودة الاتصال");
-        }
-    } finally {
-        syncInFlight = false;
-        if (queuedPush) {
-            const next = queuedPush;
-            queuedPush = null;
-            syncToExternalCloud(next.isSilent, next.allowStaffArchivePush, next.lightStaffMode);
-        }
+        setCloudStatusPill("تعذر المزامنة", "text-rose-600");
+        if (!isSilent) alert("تعذر الاتصال بالسحابة: " + err.message);
     }
 }
 
-async function restoreFromExternalCloud(isSilent = false, opts = {}) {
-    if (!sessionToken) return false;
+async function restoreFromExternalCloud(isSilent = false) {
     const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
-    if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return false; }
-    if (!isSilent && !confirm("سحب وتحديث البيانات من السحابة الآن؟")) return false;
-    setCloudStatusPill("جاري السحب...", "text-amber-600");
+    if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return; }
+    if (!isSilent && !confirm("استبدال البيانات الحالية بالنسخة السحابية؟")) return;
+    setCloudStatusPill("جاري التحديث...", "text-indigo-600");
     try {
-        const res = await postCloudAction(url, {
-            action: "GET_DB",
-            needCatalog: catalogList.length === 0 || !isSilent,
-            clientCatalogVer: isSilent ? lastCloudCatalogVer : 0
-        });
-        if (!res || !res.ok || !res.data) throw new Error((res && res.error) || "بيانات السحابة فارغة");
-        const before = cloudDataSig();
-        const m = mergeCloudPayload(res.data, opts);
-        if (before !== cloudDataSig() || m.catalogReplaced || m.workingLoaded) {
-            await refreshUIAfterCloudChange();
+        const res = await fetch(url + "?t=" + Date.now());
+        const json = await res.json();
+        if (json && (Array.isArray(json.catalogList) || Array.isArray(json.archiveList) || Array.isArray(json.restoreRequestsList))) {
+            await applyImportedDatabasePayload(json, isSilent);
+            setCloudStatusPill("متزامن ✓", "text-emerald-600 font-bold");
+            if (!isSilent) showPasteToast("تمت الاستعادة ☁️✓", "تم تحديث القاعدة والأرشيف والطلبات");
         } else {
-            await saveToIndexedDB(getFullDatabasePayload(false));
+            setCloudStatusPill("متصل بالسحابة", "text-slate-600");
         }
-        if (m.catalogConflict && Date.now() - lastConflictToastAt > 60000) {
-            lastConflictToastAt = Date.now();
-            showPasteToast("تنبيه تعارض ⚠", "يوجد تعديل محلي غير مرفوع على قاعدة الأصناف");
-        }
-        setCloudStatusPill("متصل بالسحابة ✓", "text-emerald-600");
-        if (!isSilent) showPasteToast("تم التحديث من السحابة ✓", "تم سحب ودمج أحدث البيانات");
-        return true;
     } catch (err) {
-        console.error("Cloud pull error:", err);
-        setCloudStatusPill("غير متصل بالسحابة", "text-rose-600");
-        if (!isSilent && err?.message !== 'unauthorized') {
-            alert("تعذر السحب من السحابة:\n" + (err?.message || err));
-        }
-        return false;
-    }
-}
-
-function updateUserField(userId, field, val) {
-    if (!currentUser?.isAdmin) return;
-    const u = appSettings.usersList.find(x => x.id === userId);
-    if (!u) return;
-    const cleaned = cleanText(String(val || '').trim());
-    if (!cleaned) { renderUsersManagementTable(); return; }
-    if (u[field] !== cleaned) {
-        u[field] = cleaned;
-        touch(u);
-        ensureUsersListInitialized();
-        saveAppState(true);
-        showPasteToast("تم تحديث الاسم ✓", cleaned);
+        setCloudStatusPill("وضع محلي", "text-amber-600");
+        if (!isSilent) alert("فشل الجلب: " + err.message);
     }
 }
 
@@ -4637,7 +4239,7 @@ async function checkSavedDiskHandleOnStartup() {
     localFileHandle = savedHandle;
     try { if ((await savedHandle.queryPermission({ mode: 'readwrite' })) === 'granted') { updateDiskSyncBadgeUI(true, false); return; } } catch (e) {}
     if (el('diskReconnectBanner')) el('diskReconnectBanner').classList.remove('hidden');
-    if (el('diskReconnectBannerText')) el('diskReconnectBannerText').innerHTML = `الملف الخارجي <b>(${esc(savedHandle.name)})</b> جاهز — اختر تفعيل المزامنة أو استيراد آخر نسخة:`;
+    if (el('diskReconnectBannerText')) el('diskReconnectBannerText').innerHTML = `الملف الخارجي <b>(${savedHandle.name})</b> جاهز — اختر تفعيل المزامنة أو استيراد آخر نسخة:`;
 }
 
 async function reconnectSavedDiskHandle(shouldImport = false) {
@@ -4706,7 +4308,7 @@ async function handleMultipleFilesUpload(event, targetMode = 'palm') {
     if (allCollectedLines.length > 0) {
         const stats = ingestBulkLines(allCollectedLines, targetMode, replaceMode);
         if (el('orderRefTitle') && el('orderRefTitle').innerText === 'طلبية #101') el('orderRefTitle').innerText = loadedNames.join(' + ');
-        showPasteToast(`تم تحميل (${files.length}) ملف 📂`, `أُدرج ${stats.added} سطر (موجود مسبقاً: ${stats.updated}) مع تجاهل العمود الثالث`);
+        showPasteToast(`تم تحميل (${files.length}) ملف 📂`, `أُدرج ${stats.added} سطر مع تجاهل العمود الثالث`);
     } else alert("لم يُعثر على بيانات صالحة!");
     event.target.value = '';
 }
@@ -4742,28 +4344,19 @@ function executeCustomPrint(mode) {
     else if (mode === 'WRONG_ONLY') rows = [];
 
     const includeWrong = ['ALL_REPORT', 'MISMATCH_AND_WRONG', 'WRONG_ONLY'].includes(mode);
-    const rH = rows.map((r, i) => `<tr><td style="text-align:center">${i + 1}</td><td><b>${esc(r.oC)}</b>${r.mC && r.mC !== r.oC ? `<br><small>${esc(r.mC)}</small>` : ''}</td><td>${esc(r.name)}</td><td>${esc(r.sp?.pT || '-')}</td><td style="text-align:center">${esc(r.mat)}</td><td style="text-align:center;font-weight:bold">${esc(r.req)}</td><td style="text-align:center;font-weight:bold">${esc(r.scn)}</td><td style="text-align:center;font-weight:bold" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td style="text-align:center;font-weight:bold">${r.diff === 0 ? 'مطابق' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${esc(r.diff)})`)}</td></tr>`).join('');
-    const wH = (includeWrong && wI.length > 0) ? `<h4 style="font-weight:900;margin:12px 0 6px 0;font-size:13px">الأكواد الخاطئة (${esc(wI.length)})</h4><table class="basic-print-table"><thead><tr><th style="width:5%">#</th><th style="width:20%">الكود الخاطئ</th><th style="width:23%">الصنف</th><th style="width:32%">المواصفات</th><th style="width:10%">الخامة</th><th style="width:10%">العدد</th></tr></thead><tbody>${wI.map((w, i) => `<tr><td style="text-align:center">${i + 1}</td><td><b>${esc(w.raw)}</b></td><td>${esc(w.name)}</td><td>${esc(w.sp?.pT || '-')}</td><td style="text-align:center">${esc(w.mat)}</td><td style="text-align:center;font-weight:bold">${esc(w.qty)}</td></tr>`).join('')}</tbody></table>` : '';
+    const rH = rows.map((r, i) => `<tr><td style="text-align:center">${i + 1}</td><td><b>${r.oC}</b>${r.mC && r.mC !== r.oC ? `<br><small>${r.mC}</small>` : ''}</td><td>${r.name}</td><td>${r.sp?.pT || '-'}</td><td style="text-align:center">${r.mat}</td><td style="text-align:center;font-weight:bold">${r.req}</td><td style="text-align:center;font-weight:bold">${r.scn}</td><td style="text-align:center;font-weight:bold" dir="ltr">${r.diff > 0 ? '+' + r.diff : r.diff}</td><td style="text-align:center;font-weight:bold">${r.diff === 0 ? 'مطابق' : (r.diff < 0 ? `نقص (${Math.abs(r.diff)})` : `زيادة (+${r.diff})`)}</td></tr>`).join('');
+    const wH = (includeWrong && wI.length > 0) ? `<h4 style="font-weight:900;margin:12px 0 6px 0;font-size:13px">الأكواد الخاطئة (${wI.length})</h4><table class="basic-print-table"><thead><tr><th style="width:5%">#</th><th style="width:20%">الكود الخاطئ</th><th style="width:23%">الصنف</th><th style="width:32%">المواصفات</th><th style="width:10%">الخامة</th><th style="width:10%">العدد</th></tr></thead><tbody>${wI.map((w, i) => `<tr><td style="text-align:center">${i + 1}</td><td><b>${w.raw}</b></td><td>${w.name}</td><td>${w.sp?.pT || '-'}</td><td style="text-align:center">${w.mat}</td><td style="text-align:center;font-weight:bold">${w.qty}</td></tr>`).join('')}</tbody></table>` : '';
 
-    el('dedicatedPrintArea').innerHTML = `<div style="border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><h2 style="font-size:16px;font-weight:900;margin:0">${esc(el('reportHeaderTitle')?.innerText || 'تقرير تشييك البالم')}</h2><p style="font-size:11px;margin:2px 0 0 0">${esc(el('reportHeaderSub')?.innerText || '')}</p></div><div style="text-align:left;font-size:12px;font-weight:bold"><div>الصالة: ${esc(el('orderRefTitle')?.innerText || '')}</div><div>التاريخ: ${esc(el('headerDateText')?.innerText || '')}</div></div></div><table class="basic-print-summary"><tr><td><b>المطلوب:</b> ${esc(k.tRP)} (${esc(k.tOI)} صنف)</td><td><b>المسحوب:</b> ${esc(k.tSP)}</td><td><b>المطابق:</b> ${esc(k.mC)} (${esc(k.mP)}%)</td><td><b>النقص:</b> ${esc(k.sS)}</td><td><b>الزيادة:</b> ${esc(k.oS)}</td><td><b>الخاطئ:</b> ${esc(k.wQT)}</td></tr></table>${mode !== 'WRONG_ONLY' ? `<table class="basic-print-table"><thead><tr><th style="width:4%">#</th><th style="width:16%">الكود</th><th style="width:18%">الصنف</th><th style="width:25%">المواصفات</th><th style="width:8%">الخامة</th><th style="width:7%">المطلوب</th><th style="width:7%">المسحوب</th><th style="width:7%">الفرق</th><th style="width:8%">النتيجة</th></tr></thead><tbody>${rH || `<tr><td colspan="9" style="text-align:center;padding:12px">لا توجد أصناف</td></tr>`}</tbody></table>` : ''}${wH}`;
+    el('dedicatedPrintArea').innerHTML = `<div style="border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><h2 style="font-size:16px;font-weight:900;margin:0">${el('reportHeaderTitle')?.innerText || 'تقرير تشييك البالم'}</h2><p style="font-size:11px;margin:2px 0 0 0">${el('reportHeaderSub')?.innerText || ''}</p></div><div style="text-align:left;font-size:12px;font-weight:bold"><div>الصالة: ${el('orderRefTitle')?.innerText || ''}</div><div>التاريخ: ${el('headerDateText')?.innerText || ''}</div></div></div><table class="basic-print-summary"><tr><td><b>المطلوب:</b> ${k.tRP} (${k.tOI} صنف)</td><td><b>المسحوب:</b> ${k.tSP}</td><td><b>المطابق:</b> ${k.mC} (${k.mP}%)</td><td><b>النقص:</b> ${k.sS}</td><td><b>الزيادة:</b> ${k.oS}</td><td><b>الخاطئ:</b> ${k.wQT}</td></tr></table>${mode !== 'WRONG_ONLY' ? `<table class="basic-print-table"><thead><tr><th style="width:4%">#</th><th style="width:16%">الكود</th><th style="width:18%">الصنف</th><th style="width:25%">المواصفات</th><th style="width:8%">الخامة</th><th style="width:7%">المطلوب</th><th style="width:7%">المسحوب</th><th style="width:7%">الفرق</th><th style="width:8%">النتيجة</th></tr></thead><tbody>${rH || `<tr><td colspan="9" style="text-align:center;padding:12px">لا توجد أصناف</td></tr>`}</tbody></table>` : ''}${wH}`;
     window.print();
 }
 
-async function exportPortableAppWithDB() {
+function exportPortableAppWithDB() {
     if (!currentUser?.isAdmin) return;
-    ensureUsersListInitialized();
     const cleanOrd = el('exportCleanOrderCheck')?.checked;
-    const payload = getFullDatabasePayload(false);
-    delete payload._syncMeta; delete payload.staffLiveLocations;
-    const safeSettings = deepClone(payload.settings || {});
-    delete safeSettings.password;
-    if (Array.isArray(safeSettings.usersList)) safeSettings.usersList.forEach(u => { delete u.password; delete u.lastSeenAt; delete u.lastLocation; delete u.lastMapUrl; });
-    const exportState = { ...payload, settings: safeSettings, labelsLocked: true, orderData: cleanOrd ? [] : orderData, palmData: cleanOrd ? [] : palmData, activeEditingArchiveId: cleanOrd ? null : activeEditingArchiveId };
-    let html = null;
-    try { if (/^https?:$/.test(location.protocol)) { const r = await fetch(location.href, { cache: 'no-store' }); if (r.ok) html = await r.text(); } } catch (e) {}
-    if (!html) html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-    const stateJson = JSON.stringify(exportState).replace(/</g, '\\u003c');
-    html = html.replace(/<script id="embeddedStateScript">[\s\S]*?<\/script>/, () => `<script id="embeddedStateScript">\nwindow.INITIAL_APP_STATE = ${stateJson};\n<\/script>`);
+    const exportState = { ...getFullDatabasePayload(false), labelsLocked: true, orderData: cleanOrd ? [] : orderData, palmData: cleanOrd ? [] : palmData, activeEditingArchiveId: cleanOrd ? null : activeEditingArchiveId };
+    let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    html = html.replace(/<script id="embeddedStateScript">[\s\S]*?<\/script>/, `<script id="embeddedStateScript">\nwindow.INITIAL_APP_STATE = ${JSON.stringify(exportState)};\n<\/script>`);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })); a.download = `Ahmad_Palm_Pro_v${exportState.dbVersion}.html`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     showPasteToast("تم التصدير", `حُفظت النسخة v${exportState.dbVersion}`);
@@ -4788,8 +4381,6 @@ function startPeriodicCloudAutoSync() {
     periodicCloudPullTimer = setInterval(async () => {
         if (document.hidden || autoCloudSaveTimer) return;
         if (isModalOpen('passwordModal') || isModalOpen('saveArchiveModal') || isModalOpen('manualPasteModal') || isModalOpen('restoreRequestModal')) return;
-        if (!currentUser) return;
-        if (needsPush && !syncInFlight) { const p = needsPush; await syncToExternalCloud(true, p.allowStaffArchivePush, p.lightStaffMode); return; }
         await restoreFromExternalCloud(true);
     }, AUTO_PULL_INTERVAL_MS);
 }
@@ -4860,7 +4451,7 @@ function renderAdminHallsMap() {
     hallLocationsList.forEach(loc => {
         const hallRecords = archiveList.filter(a => nw(a.hallName) === nw(loc.hallName));
         const marker = L.marker([loc.lat, loc.lng]).addTo(adminMapMarkersLayer);
-        marker.bindTooltip(`<b>${esc(loc.hallName)}</b> (${esc(hallRecords.length)} طلبية)`, { direction: 'top' });
+        marker.bindTooltip(`<b>${loc.hallName}</b> (${hallRecords.length} طلبية)`, { direction: 'top' });
         marker.on('click', () => openHallRecordFromMap(loc.id));
         bounds.push([loc.lat, loc.lng]);
     });
@@ -4876,13 +4467,13 @@ function renderAdminHallsMap() {
             weight: 2
         }).addTo(adminMapMarkersLayer);
 
-        staffMarker.bindTooltip(`موظف: <b>${esc(st.userName || 'موظف')}</b> (${timeStr})`, { direction: 'top' });
+        staffMarker.bindTooltip(`موظف: <b>${st.userName || 'موظف'}</b> (${timeStr})`, { direction: 'top' });
         staffMarker.bindPopup(`
             <div style="font-size:12px;line-height:1.6">
-                <b>الموظف:</b> ${esc(st.userName || 'موظف')}<br>
+                <b>الموظف:</b> ${st.userName || 'موظف'}<br>
                 <b>الدقة التقريبية:</b> ~${st.accuracy || 0} متر<br>
                 <b>آخر تحديث:</b> ${timeStr || '-'}<br>
-                <b>الإحداثيات:</b> <span dir="ltr">${esc(st.lat)}, ${esc(st.lng)}</span>
+                <b>الإحداثيات:</b> <span dir="ltr">${st.lat}, ${st.lng}</span>
             </div>
         `);
         bounds.push([st.lat, st.lng]);
@@ -4893,7 +4484,7 @@ function renderAdminHallsMap() {
 
 function saveHallMapLocation() {
     if (!currentUser?.isAdmin) return;
-    const name = cleanText((el('mapHallNameInput')?.value || '').trim());
+    const name = (el('mapHallNameInput')?.value || '').trim();
     const coordsRaw = (el('mapHallCoordsInput')?.value || '').trim();
     if (!name || !coordsRaw) { alert("أدخل اسم الصالة والإحداثيات (أو انقر على موقعها في الخريطة)!"); return; }
 
@@ -4903,9 +4494,9 @@ function saveHallMapLocation() {
     const existingIdx = hallLocationsList.findIndex(h => nw(h.hallName) === nw(name));
     if (existingIdx !== -1) {
         hallLocationsList[existingIdx].lat = parts[0];
-        hallLocationsList[existingIdx].lng = parts[1]; touch(hallLocationsList[existingIdx]);
+        hallLocationsList[existingIdx].lng = parts[1];
     } else {
-        hallLocationsList.push({ id: 'LOC_' + Date.now(), hallName: name, lat: parts[0], lng: parts[1], updatedAt: Date.now() });
+        hallLocationsList.push({ id: 'LOC_' + Date.now(), hallName: name, lat: parts[0], lng: parts[1] });
     }
 
     if (el('mapHallNameInput')) el('mapHallNameInput').value = '';
@@ -4936,14 +4527,14 @@ function openHallRecordFromMap(locId) {
     const listBox = el('selectedMapHallRecordsList');
     if (!listBox) return;
     if (records.length === 0) {
-        listBox.innerHTML = `<div class="text-center py-10 text-xs font-bold text-slate-400">لا توجد طلبيات مؤرشفة باسم (${esc(loc.hallName)}) بعد</div>`;
+        listBox.innerHTML = `<div class="text-center py-10 text-xs font-bold text-slate-400">لا توجد طلبيات مؤرشفة باسم (${loc.hallName}) بعد</div>`;
         return;
     }
 
     listBox.innerHTML = records.map(r => `
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center gap-2 text-xs">
             <div>
-                <div class="font-black text-slate-900">الأسبوع (${esc(r.weekNum)}) <span class="font-mono text-slate-400 font-normal mr-1" dir="ltr">${esc(r.date)}</span></div>
+                <div class="font-black text-slate-900">الأسبوع (${r.weekNum}) <span class="font-mono text-slate-400 font-normal mr-1" dir="ltr">${r.date}</span></div>
                 <div class="text-[11px] text-slate-600 mt-0.5">مطلوب: <b>${r.kpis?.tRP || 0}</b> | مسحوب: <b class="text-indigo-600">${r.kpis?.tSP || 0}</b> | دقة: <b class="text-emerald-600">${r.kpis?.mP ?? '-'}%</b></div>
             </div>
             <button type="button" onclick="jumpToArchivedReportFromAnalytics('${escAttr(r.id)}')" class="btn-primary !py-1 !text-[11px]">فتح التقرير</button>
@@ -4954,7 +4545,6 @@ function openHallRecordFromMap(locId) {
 function deleteSelectedHallLocation() {
     if (!currentUser?.isAdmin || !selectedMapHallId) return;
     if (!confirm("إزالة علامة هذه الصالة من الخريطة؟")) return;
-    markDeleted(selectedMapHallId);
     hallLocationsList = hallLocationsList.filter(x => x.id !== selectedMapHallId);
     selectedMapHallId = null;
     el('btnDeleteSelectedHallPin')?.classList.add('hidden');
@@ -4993,7 +4583,7 @@ async function searchMapAreaByName() {
             fillColor: '#6366f1',
             fillOpacity: 0.45,
             weight: 2
-        }).addTo(adminLeafletMap).bindPopup(`<b>${esc(results[0].display_name)}</b>`).openPopup();
+        }).addTo(adminLeafletMap).bindPopup(`<b>${results[0].display_name}</b>`).openPopup();
 
         if (el('mapHallCoordsInput')) {
             el('mapHallCoordsInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -5124,31 +4714,33 @@ function captureStaffGpsLocation(silent = false) {
     );
 }
 
-// ===== [التعديل 5] تسجيل آخر ظهور وموقع للموظف عند الدخول =====
+// ================= تسجيل آخر ظهور وموقع للموظف عند الدخول فقط =================
 function captureEmployeeLastSeenLocation(userObj) {
     if (!userObj || userObj.isAdmin) return;
     const nowStr = `${getTodayFormatted()} ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
-    const uRef = appSettings.usersList.find(u => u.id === userObj.id) || userObj;
-    uRef.lastSeenAt = nowStr; touch(uRef);
+    const uRef = appSettings.usersList.find(u => u.id === userObj.id);
+    if (!uRef) return;
+
+    uRef.lastSeenAt = nowStr;
     uRef.lastLocation = "جاري تحديد الموقع...";
 
     const pushLocationToCloud = () => {
         saveToIndexedDB(getFullDatabasePayload(false));
         const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
-        if (url && sessionToken) {
-            postCloudAction(url, {
-                action: "SAVE_DB",
-                payload: {
+        if (url) {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
                     lightStaffUpdate: true,
                     timestamp: new Date().toISOString(),
                     userLocationUpdate: {
                         userId: uRef.id,
                         name: uRef.name,
                         lastSeenAt: uRef.lastSeenAt,
-                        lastLocation: uRef.lastLocation,
-                        lastMapUrl: uRef.lastMapUrl || ""
+                        lastLocation: uRef.lastLocation
                     }
-                }
+                })
             }).catch(() => {});
         }
     };
@@ -5180,9 +4772,11 @@ function captureEmployeeLastSeenLocation(userObj) {
     }
 }
 
-window.addEventListener('beforeunload', () => { if (_saveTimer) flushAppState(); });
-window.addEventListener('pagehide', () => { if (_saveTimer) flushAppState(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden && _saveTimer) flushAppState(); });
+window.addEventListener('beforeunload', () => {
+    if (currentUser && !currentUser.isAdmin) {
+        currentUser = null;
+    }
+});
 </script>
 </body>
 </html>
