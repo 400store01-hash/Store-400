@@ -2123,10 +2123,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ===== [التعديل 2] تسجيل الدخول وتحديث الرابط وإصدار القاعدة =====
+function promptUpdateCloudUrlFromLogin() {
+    const cur = (localStorage.getItem('company400_cloud_url') || DEFAULT_CLOUD_WEBHOOK_URL || '').trim();
+    const nextUrl = prompt("الصق رابط Google Apps Script الجديد (ينتهي بـ /exec):", cur);
+    if (nextUrl && nextUrl.trim().startsWith("https://")) {
+        const cleanUrl = nextUrl.trim();
+        appSettings.cloudWebhookUrl = cleanUrl;
+        localStorage.setItem('company400_cloud_url', cleanUrl);
+        showPasteToast("تم تحديث رابط السحابة ✓", "جرب تسجيل الدخول الآن");
+    }
+}
+
 async function verifyPassword() {
     const unameInput = (el('loginUsernameInput')?.value || '').trim();
     const pwInput = nd((el('passwordInput')?.value || '').trim());
-    const url = (DEFAULT_CLOUD_WEBHOOK_URL || appSettings.cloudWebhookUrl || '').trim();
+    const savedCustomUrl = (localStorage.getItem('company400_cloud_url') || '').trim();
+    const url = (savedCustomUrl || DEFAULT_CLOUD_WEBHOOK_URL || '').trim();
 
     if (Date.now() < loginLockUntil) {
         const e0 = el('passwordError');
@@ -2138,7 +2150,7 @@ async function verifyPassword() {
     if (btn) { btn.disabled = true; btn.textContent = "جاري التحقق..."; }
 
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 35000);
+    const timer = setTimeout(() => ctrl.abort(), 25000);
     try {
         const res = await fetch(url, {
             method: 'POST',
@@ -2152,10 +2164,9 @@ async function verifyPassword() {
         try {
             result = JSON.parse(rawText);
         } catch (parseErr) {
-            if (rawText.includes('<html') || rawText.includes('<!DOCTYPE')) {
-                throw new Error("الخادم أعاد صفحة HTML بدلاً من JSON — تأكد من نشر السكربت بصلاحية (Anyone / أي شخص) و (Execute as: Me).");
-            }
-            throw new Error("استجابة غير صالحة من السكربت: " + rawText.slice(0, 80));
+            throw new Error(rawText.includes('<html')
+                ? "الخادم أعاد صفحة HTML — تأكد من نشر السكربت بصلاحية (Anyone / أي شخص) و (Execute as: Me)."
+                : "استجابة غير صالحة من السكربت.");
         }
 
         if (!result.ok || !result.user || !result.token) {
@@ -2182,10 +2193,17 @@ async function verifyPassword() {
         }
     } catch (err) {
         console.error("Login error:", err);
-        const msg = err?.name === 'AbortError'
-            ? "انتهت مهلة انتظار الخادم (35 ثانية) — تحقق من سرعة الإنترنت أو أعد المحاولة."
-            : (err?.message || String(err));
-        alert("تعذر الاتصال بالسحابة:\n" + msg);
+        // السماح للمدير بالدخول المحلي الاحتياطي إذا انقطع الاتصال بالسحابة
+        if (pwInput === "0-400" && confirm("تعذر الاتصال بالسحابة:\n" + (err?.message || err) + "\n\nهل تريد فتح المنظومة بالوضع المحلي للمدير الآن؟")) {
+            sessionToken = "OFFLINE_LOCAL_ADMIN";
+            currentUser = JSON.parse(JSON.stringify(DEFAULT_USERS_LIST[0]));
+            hide('passwordModal');
+            if (el('passwordError')) el('passwordError').classList.add('hidden');
+            await initApp();
+            setCloudStatusPill("وضع محلي (غير متصل)", "text-amber-600");
+            return;
+        }
+        alert("تعذر الاتصال بالسحابة:\n" + (err?.message || err));
     } finally {
         clearTimeout(timer);
         if (btn) { btn.disabled = false; btn.textContent = "تسجيل الدخول"; }
