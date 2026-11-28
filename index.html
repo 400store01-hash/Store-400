@@ -1423,7 +1423,7 @@ const DEFAULT_USERS_LIST = [
     { id: "USR_ADMIN", name: "المدير العام", salt: "ahmad-admin-salt-v1", passHash: "d176b6f1d9bde93c17cda87130e5a91eadb750b4419845a6a668cec88a598de8", isAdmin: true, perms: { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true } }
 ];
 let currentUser = null;   // [SEC] لا مستخدم قبل تسجيل الدخول
-
+let sessionToken = "";
 let activeAnalyticsSubTab = 'overview', activeAnalyticsItemClass = 'best_selling';
 let analyticsCharts = { trend: null, status: null, stories: null, halls: null };
 let cachedAnalyticsData = null;
@@ -1445,11 +1445,6 @@ function ensureUsersListInitialized() {
         if (!u.perms) u.perms = {};
         if (u.perms.canNewOrder === undefined) u.perms.canNewOrder = true;
         if (u.perms.canApproveWrong === undefined) u.perms.canApproveWrong = true;
-        // [SEC] ترحيل كلمات المرور النصية القديمة إلى تجزئة (ملح ثابت للترحيل ليتطابق الناتج على كل الأجهزة)
-        if (u.password !== undefined) {
-            if (!u.passHash) { u.salt = 'mig:' + u.id; u.passHash = hashPassword(nd(String(u.password).trim()), u.salt); }
-            delete u.password;
-        }
     });
     const dl = el('loginUsersDatalist');
     if (dl) dl.innerHTML = appSettings.usersList.map(u => `<option value="${escAttr(u.name)}">`).join('');
@@ -1576,6 +1571,7 @@ function switchSettingsSubTab(sub) {
 
 function logoutCurrentUser() {
     currentUser = null;
+    sessionToken = "";
     enforceAdminOnlyVisibility();
     if (el('passwordInput')) el('passwordInput').value = '';
     show('passwordModal');
@@ -1648,7 +1644,6 @@ function addNewUserAccount() {
     const isAdmin = el('newUserRoleType')?.value === 'ADMIN';
     if (!name || !pass) { alert("أدخل اسم المستخدم ورمز الدخول!"); return; }
     if (pass.length < 4 && !confirm("رمز الدخول قصير (أقل من 4 خانات) وسهل التخمين. المتابعة؟")) return;
-    if (isPasswordTaken(pass)) { alert("رمز الدخول مستخدم لموظف آخر! اختر رمزاً مختلفاً لتمييز كل موظف."); return; }
 
     const perms = isAdmin
         ? { canNewOrder: true, canApproveWrong: true, canSwap: true, canSaveArchive: true, canViewArchive: true, canViewAllWeeks: true, canDelete: true, canViewCatalog: true, canViewShortcuts: true, canViewAnalytics: true, canViewSettings: true, canEditCurrentWeekArchive: true }
@@ -1667,8 +1662,7 @@ function addNewUserAccount() {
             canViewSettings: false
         };
 
-    const _salt = makeSalt();
-    appSettings.usersList.push({ id: 'USR_' + Date.now(), name, salt: _salt, passHash: hashPassword(pass, _salt), isAdmin, perms, updatedAt: Date.now() });
+    appSettings.usersList.push({ id: 'USR_' + Date.now(), name, password: pass, isAdmin, perms, updatedAt: Date.now() });
     if (el('newUserName')) el('newUserName').value = '';
     if (el('newUserPass')) el('newUserPass').value = '';
     ensureUsersListInitialized();
@@ -1676,7 +1670,6 @@ function addNewUserAccount() {
     saveAppState(true);
     showPasteToast("تم إضافة الموظف ✓", `حساب (${name}) جاهز ومرفوع للسحابة`);
 }
-
 function toggleUserPermissionFlag(userId, permKey) {
     if (!currentUser?.isAdmin) return;
     const u = appSettings.usersList.find(x => x.id === userId);
@@ -1689,16 +1682,18 @@ function toggleUserPermissionFlag(userId, permKey) {
     showPasteToast("تم تحديث الصلاحية", `${u.name}`);
 }
 
-function updateUserField(userId, field, value) {
-    if (!currentUser?.isAdmin || field !== 'name') return;
-    const u = appSettings.usersList.find(x => x.id === userId);
-    const cleanVal = cleanText(String(value || '').trim());
-    if (!u || !cleanVal) { renderUsersManagementTable(); return; }
-    u.name = cleanVal; touch(u);
-    ensureUsersListInitialized();
-    applyRolePermissionsUI();
+function changeUserPassword(userId) {
+    if (!currentUser?.isAdmin) return;
+    const u = appSettings.usersList.find(x => x.id === userId); if (!u) return;
+    const p = nd((prompt(`أدخل رمز الدخول الجديد للموظف (${u.name}):`) || '').trim());
+    if (!p) return;
+    if (p.length < 4 && !confirm("الرمز قصير (أقل من 4 خانات) وسهل التخمين. المتابعة؟")) return;
+    u.password = p;
+    delete u.passHash; delete u.salt;
+    touch(u);
+    renderUsersManagementTable();
     saveAppState(true);
-    showPasteToast("تم التحديث ✓", "حُفظ الاسم الجديد في السحابة");
+    showPasteToast("تم تغيير الرمز ✓", `سيتم رفع الرمز الجديد لـ (${u.name}) إلى السحابة`);
 }
 
 function changeUserPassword(userId) {
@@ -1707,12 +1702,13 @@ function changeUserPassword(userId) {
     const p = nd((prompt(`أدخل رمز الدخول الجديد للموظف (${u.name}):`) || '').trim());
     if (!p) return;
     if (p.length < 4 && !confirm("الرمز قصير (أقل من 4 خانات) وسهل التخمين. المتابعة؟")) return;
-    if (isPasswordTaken(p, userId)) { alert("هذا الرمز مستخدم لموظف آخر! اختر رمزاً مختلفاً."); return; }
-    u.salt = makeSalt(); u.passHash = hashPassword(p, u.salt); delete u.password; touch(u);
-    renderUsersManagementTable(); saveAppState(true);
-    showPasteToast("تم تغيير الرمز ✓", u.name);
+    u.password = p;
+    delete u.passHash; delete u.salt;
+    touch(u);
+    renderUsersManagementTable();
+    saveAppState(true);
+    showPasteToast("تم تغيير الرمز ✓", `سيتم رفع الرمز الجديد لـ (${u.name}) إلى السحابة`);
 }
-
 function deleteUserAccount(userId) {
     if (!currentUser?.isAdmin) return;
     if (userId === 'USR_ADMIN' || appSettings.usersList.length <= 1) { alert("لا يمكن حذف حساب المدير الأساسي!"); return; }
@@ -2170,12 +2166,10 @@ function getCurrentISOWeek() { const d = new Date(), dt = new Date(Date.UTC(d.ge
 
 window.addEventListener('DOMContentLoaded', async () => {
     if (el('headerDateText')) el('headerDateText').textContent = getTodayFormatted();
-    const emb = window.INITIAL_APP_STATE || {}, svd = await loadFromIndexedDB();
-    if (svd?.settings) sanitizeDeep(svd.settings); if (emb?.settings) sanitizeDeep(emb.settings);
+    const svd = await loadFromIndexedDB();
+    if (svd?.settings) sanitizeDeep(svd.settings);
     if (svd?.settings) appSettings = { ...appSettings, ...svd.settings };
-    else if (emb?.settings) appSettings = { ...appSettings, ...emb.settings };
 
-    ensureUsersListInitialized();
     const savedLocalTheme = localStorage.getItem('company400_theme');
     if (savedLocalTheme && !svd?.settings?.theme) appSettings.theme = savedLocalTheme;
     if (svd && svd.labelsLocked !== undefined) isLabelsLocked = svd.labelsLocked;
@@ -2184,12 +2178,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     applyThemeUI(); setupEditableLabelsSystem();
 
     try {
-        const cloudData = await fetchCloudJson(DEFAULT_CLOUD_WEBHOOK_URL, 10000);
-        if (cloudData?.settings?.usersList && Array.isArray(cloudData.settings.usersList)) {
-            sanitizeDeep(cloudData.settings.usersList);
-            if (cloudData.tombstones && typeof cloudData.tombstones === 'object') Object.keys(cloudData.tombstones).forEach(k => { if (!tombstones[k]) tombstones[k] = Number(cloudData.tombstones[k]) || 0; });
-            appSettings.usersList = mergeById(appSettings.usersList, cloudData.settings.usersList, tombstones);
-            ensureUsersListInitialized();
+        const res = await fetch(DEFAULT_CLOUD_WEBHOOK_URL + "?t=" + Date.now());
+        const info = await res.json();
+        if (Array.isArray(info?.usernames) && el('loginUsersDatalist')) {
+            el('loginUsersDatalist').innerHTML = info.usernames.map(n => `<option value="${escAttr(n)}">`).join('');
         }
     } catch (e) {}
 });
@@ -2197,34 +2189,48 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function verifyPassword() {
     const unameInput = (el('loginUsernameInput')?.value || '').trim();
     const pwInput = nd((el('passwordInput')?.value || '').trim());
-    ensureUsersListInitialized();
+    const url = (appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
 
     if (Date.now() < loginLockUntil) {
         const e0 = el('passwordError');
         if (e0) { e0.textContent = `محاولات كثيرة خاطئة — انتظر ${Math.ceil((loginLockUntil - Date.now()) / 1000)} ثانية`; e0.classList.remove('hidden'); }
         return;
     }
-    let matchedUser = null;
-    if (unameInput) matchedUser = appSettings.usersList.find(u => nw(u.name) === nw(unameInput) && checkUserPassword(u, pwInput));
-    else matchedUser = appSettings.usersList.find(u => checkUserPassword(u, pwInput));
 
-    if (!matchedUser) {
-        loginFails++;
-        const e1 = el('passwordError');
-        if (loginFails >= 5) { loginLockUntil = Date.now() + 30000; loginFails = 0; if (e1) e1.textContent = 'محاولات كثيرة خاطئة — انتظر 30 ثانية'; }
-        else if (e1) e1.textContent = 'اسم المستخدم أو رمز الدخول غير صحيح!';
-        if (e1) e1.classList.remove('hidden');
-        return;
-    }
-    loginFails = 0;
+    const btn = document.querySelector('#passwordModal button[onclick="verifyPassword()"]');
+    if (btn) { btn.disabled = true; btn.textContent = "جاري التحقق..."; }
 
-    currentUser = matchedUser;
-    hide('passwordModal');
-    if (el('passwordError')) el('passwordError').classList.add('hidden');
-    el('passwordInput').blur();
-    await initApp();
-    if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
-        captureEmployeeLastSeenLocation(currentUser);
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "LOGIN", username: unameInput, password: pwInput })
+        });
+        const result = await res.json();
+
+        if (!result.ok || !result.user || !result.token) {
+            loginFails++;
+            const e1 = el('passwordError');
+            if (loginFails >= 5) { loginLockUntil = Date.now() + 30000; loginFails = 0; if (e1) e1.textContent = 'محاولات كثيرة خاطئة — انتظر 30 ثانية'; }
+            else if (e1) e1.textContent = result.error || 'اسم المستخدم أو رمز الدخول غير صحيح!';
+            if (e1) e1.classList.remove('hidden');
+            return;
+        }
+
+        loginFails = 0;
+        sessionToken = result.token;
+        currentUser = result.user;
+        hide('passwordModal');
+        if (el('passwordError')) el('passwordError').classList.add('hidden');
+        el('passwordInput').blur();
+        await initApp();
+        if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
+            captureEmployeeLastSeenLocation(currentUser);
+        }
+    } catch (err) {
+        alert("تعذر الاتصال بالسحابة للتحقق من الدخول. تأكد من الإنترنت ورابط السكربت.");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "تسجيل الدخول"; }
     }
 }
 
@@ -4433,8 +4439,31 @@ async function refreshUIAfterCloudChange() {
     recalculateAndRender(false);
 }
 
+async function postCloudAction(url, bodyObj, timeoutMs = 20000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ ...bodyObj, token: sessionToken }),
+            signal: ctrl.signal
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        if (json && json.unauthorized) {
+            alert("انتهت صلاحية الجلسة، يرجى إعادة تسجيل الدخول.");
+            logoutCurrentUser();
+            throw new Error('unauthorized');
+        }
+        return json;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 async function syncToExternalCloud(isSilent = false, allowStaffArchivePush = false, lightStaffMode = false) {
-    if (!currentUser?.isAdmin && !allowStaffArchivePush) return;
+    if (!sessionToken || (!currentUser?.isAdmin && !allowStaffArchivePush)) return;
     const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
     if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return; }
     if (syncInFlight) { queuedPush = { isSilent, allowStaffArchivePush, lightStaffMode }; return; }
@@ -4442,80 +4471,20 @@ async function syncToExternalCloud(isSilent = false, allowStaffArchivePush = fal
     setCloudStatusPill("جاري المزامنة...", "text-amber-600");
     if (!isSilent) showPasteToast("جاري الرفع ⏳", "يرجى الانتظار...");
     try {
-        // 1) اسحب أولاً ثم ادمج — لا رفع أعمى فوق نسخة أحدث
-        const cloud = await fetchCloudJson(url);
+        const getRes = await postCloudAction(url, { action: "GET_DB" });
+        const cloud = (getRes && getRes.ok && getRes.data) ? getRes.data : {};
         const before = cloudDataSig();
         const m = mergeCloudPayload(cloud, { loadWorking: false });
         if (before !== cloudDataSig() || m.catalogReplaced) await refreshUIAfterCloudChange();
 
-        // 2) جهّز الحمولة
         const payload = getFullDatabasePayload(lightStaffMode);
         delete payload._syncMeta;
         let pushedCatalog = false;
         if (!lightStaffMode) {
-            const sig = catalogSig(), catChanged = sig !== lastSyncedCatalogSig;
+            const sig = catalogSig();
             let force = false;
             if (m.catalogConflict) {
-                if (!isSilent) force = confirm("تعارض: قاعدة الأصناف/المختصرات على السحابة أحدث من نسختك المحلية.\n\nموافق = استبدال نسخة السحابة بنسخة جهازك\nإلغاء = إبقاء نسخة السحابة وعدم رفع تعديلاتك على القاعدة");
-                if (!force) {
-                    payload.catalogList = cloud.catalogList; payload.shortcutList = cloud.shortcutList;
-                    if (cloud.customLabels) payload.customLabels = cloud.customLabels;
-                    if (cloud.logo !== undefined) payload.logo = cloud.logo;
-                    payload.dbVersion = Number(cloud.dbVersion) || lastCloudDbVersion;
-                    if (Date.now() - lastConflictToastAt > 600000) { lastConflictToastAt = Date.now(); showPasteToast("⚠ تعارض في قاعدة الأصناف", "السحابة أحدث — لم تُرفع تعديلاتك عليها. استخدم «استعادة من السحابة»"); }
-                }
-            }
-            if (!m.catalogConflict || force) {
-                payload.dbVersion = catChanged ? Math.max(currentDbVersion, lastCloudDbVersion) + 1 : Math.max(currentDbVersion, lastCloudDbVersion);
-                pushedCatalog = true; payload._sig = sig;
-            }
-        }
-        const sigToStore = payload._sig; delete payload._sig;
-        payload.token = getCloudToken();
-
-        // 3) ارفع
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        try { const t = await res.clone().text(); if (/"error"\s*:\s*"unauthorized"/.test(t)) throw new Error('unauthorized'); } catch (e) { if (e && e.message === 'unauthorized') throw e; }
-        if (pushedCatalog) { lastSyncedCatalogSig = sigToStore; currentDbVersion = lastCloudDbVersion = payload.dbVersion; await saveToIndexedDB(getFullDatabasePayload(false)); }
-        needsPush = null;
-        setCloudStatusPill("متزامن ✓", "text-emerald-600 font-bold");
-        if (!isSilent) showPasteToast("تم الحفظ السحابي ☁️✓", "دُمجت البيانات ورُفعت بنجاح");
-    } catch (err) {
-        needsPush = { allowStaffArchivePush, lightStaffMode };   // سيُعاد المحاولة تلقائياً
-        setCloudStatusPill("تعذر المزامنة — ستُعاد المحاولة", "text-rose-600");
-        if (!isSilent) alert("تعذر الاتصال بالسحابة (بياناتك محفوظة محلياً وستُرفع تلقائياً): " + err.message);
-    } finally {
-        syncInFlight = false;
-        if (queuedPush) { const q = queuedPush; queuedPush = null; setTimeout(() => syncToExternalCloud(q.isSilent, q.allowStaffArchivePush, q.lightStaffMode), 300); }
-    }
-}
-
-async function restoreFromExternalCloud(isSilent = false, opts = {}) {
-    const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
-    if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return; }
-    if (!isSilent && !confirm("استبدال البيانات الحالية بالنسخة السحابية؟")) return;
-    setCloudStatusPill("جاري التحديث...", "text-indigo-600");
-    try {
-        const json = await fetchCloudJson(url);
-        if (json && (Array.isArray(json.catalogList) || Array.isArray(json.archiveList) || Array.isArray(json.restoreRequestsList))) {
-            if (isSilent) {
-                const before = cloudDataSig();
-                const m = mergeCloudPayload(json, { loadWorking: Boolean(opts.loadWorking) });
-                if (before !== cloudDataSig() || m.catalogReplaced || m.workingLoaded) await refreshUIAfterCloudChange();
-            } else {
-                await applyImportedDatabasePayload(json, false);
-            }
-            setCloudStatusPill("متزامن ✓", "text-emerald-600 font-bold");
-            if (!isSilent) showPasteToast("تمت الاستعادة ☁️✓", "تم تحديث القاعدة والأرشيف والطلبات");
-        } else {
-            setCloudStatusPill("متصل بالسحابة", "text-slate-600");
-        }
-    } catch (err) {
-        setCloudStatusPill("وضع محلي", "text-amber-600");
-        if (!isSilent) alert("فشل الجلب: " + err.message);
-    }
-}
+                if (!isSilent) force = confirm("تعارض: قاعدة الأصناف على السحابة أحدث من نسختك المحلية.\n\nموافق = استبدال نسخة السحابة بنسخة
 
 async function manualCloudPullNow() {
     showPasteToast("جاري السحب من السحابة ⏳", "تحديث الطلبات والأرشيف...");
@@ -5054,23 +5023,23 @@ function captureEmployeeLastSeenLocation(userObj) {
     uRef.lastSeenAt = nowStr; touch(uRef);
     uRef.lastLocation = "جاري تحديد الموقع...";
 
-    const pushLocationToCloud = () => {
+   const pushLocationToCloud = () => {
         saveToIndexedDB(getFullDatabasePayload(false));
         const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
-        if (url) {
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
+        if (url && sessionToken) {
+            postCloudAction(url, {
+                action: "SAVE_DB",
+                payload: {
                     lightStaffUpdate: true,
                     timestamp: new Date().toISOString(),
                     userLocationUpdate: {
                         userId: uRef.id,
                         name: uRef.name,
                         lastSeenAt: uRef.lastSeenAt,
-                        lastLocation: uRef.lastLocation
+                        lastLocation: uRef.lastLocation,
+                        lastMapUrl: uRef.lastMapUrl || ""
                     }
-                })
+                }
             }).catch(() => {});
         }
     };
