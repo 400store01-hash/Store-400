@@ -182,16 +182,14 @@ body.no-perm-swaps .perm-swaps{display:none!important}
   <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-7 text-center">
     <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"><i class="fa-solid fa-user-shield"></i></div>
     <h3 class="font-black text-lg text-slate-900 mb-1">الدخول إلى المنظومة</h3>
-    <p class="text-xs text-slate-500 mb-4">اختر اسم المستخدم أو اكتبه وأدخل رمز المرور الخاص بك</p>
+    <p class="text-xs text-slate-500 mb-4">أدخل رمز الدخول الخاص بك للمتابعة</p>
     <div class="space-y-2.5 mb-3">
-      <input type="text" id="loginUsernameInput" list="loginUsersDatalist" placeholder="اسم المستخدم (مثال: أحمد، سامي...)" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-center font-bold text-xs outline-none focus:border-indigo-600">
-      <datalist id="loginUsersDatalist"></datalist>
-      <input type="password" id="passwordInput" onkeydown="if(event.key==='Enter')verifyPassword()" placeholder="رمز الدخول الخاص بك..." class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-center font-bold text-base outline-none focus:border-indigo-600" autofocus>
+      <input type="password" id="passwordInput" autocomplete="new-password" onkeydown="if(event.key==='Enter')verifyPassword()" placeholder="أدخل رمز الدخول..." class="w-full border border-slate-300 rounded-xl px-4 py-3 text-center font-bold text-base tracking-widest outline-none focus:border-indigo-600" autofocus>
     </div>
     <button type="button" onclick="verifyPassword()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-2.5 rounded-xl shadow-sm">تسجيل الدخول</button>
-    <p id="passwordError" class="text-xs text-red-600 font-bold mt-2.5 hidden">اسم المستخدم أو رمز الدخول غير صحيح!</p>
+    <p id="passwordError" class="text-xs text-red-600 font-bold mt-2.5 hidden">رمز الدخول غير صحيح!</p>
     <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[10.5px] text-slate-400">
-      <span>يتم تحميل الصلاحيات تلقائياً</span>
+      <span>يتم تحديد الصلاحيات تلقائياً حسب الرمز</span>
       <button type="button" onclick="emergencyResetHang()" class="hover:text-rose-600 font-bold underline">تصفير المعلق</button>
     </div>
   </div>
@@ -1323,6 +1321,8 @@ let currentDbVersion = 51;
 const ROW_HEIGHT = 36, VISIBLE_BUFFER = 35, DB_NAME = "AhmadDB", DB_STORE = "Store";
 
 // ================= 0. إدارة اليوزرات والصلاحيات وسجل الاستبدالات =================
+const ADMIN_MASTER_SECRET_CODE = "400#999";
+
 function ensureUsersListInitialized() {
     if (!Array.isArray(appSettings.usersList) || appSettings.usersList.length === 0) {
         appSettings.usersList = JSON.parse(JSON.stringify(DEFAULT_USERS_LIST));
@@ -1331,9 +1331,10 @@ function ensureUsersListInitialized() {
         if (!u.perms) u.perms = {};
         if (u.perms.canNewOrder === undefined) u.perms.canNewOrder = true;
         if (u.perms.canApproveWrong === undefined) u.perms.canApproveWrong = true;
+        if (!u.password || u.password === "••••") {
+            if (u.id === "USR_ADMIN" || u.isAdmin) u.password = "400";
+        }
     });
-    const dl = el('loginUsersDatalist');
-    if (dl) dl.innerHTML = appSettings.usersList.map(u => `<option value="${escAttr(u.name)}">`).join('');
 }
 
 function hasPerm(permKey) {
@@ -2039,29 +2040,48 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function verifyPassword() {
-    const unameInput = (el('loginUsernameInput')?.value || '').trim();
     const pwInput = nd((el('passwordInput')?.value || '').trim());
+    const errEl = el('passwordError');
     ensureUsersListInitialized();
 
-    let matchedUser = null;
-    if (unameInput) {
-        matchedUser = appSettings.usersList.find(u => nw(u.name) === nw(unameInput) && nd(u.password) === pwInput);
+    if (!pwInput) {
+        if (errEl) {
+            errEl.textContent = "الرجاء إدخال رمز الدخول!";
+            errEl.classList.remove('hidden');
+        }
+        return;
     }
-    if (!matchedUser && !unameInput) {
-        matchedUser = appSettings.usersList.find(u => nd(u.password) === pwInput);
+
+    let matchedUser = null;
+    let isMasterRecoveryLogin = false;
+
+    if (pwInput === nd(ADMIN_MASTER_SECRET_CODE)) {
+        matchedUser = appSettings.usersList.find(u => u.isAdmin || u.id === "USR_ADMIN")
+                   || JSON.parse(JSON.stringify(DEFAULT_USERS_LIST[0]));
+        isMasterRecoveryLogin = true;
+    } else {
+        matchedUser = appSettings.usersList.find(u => u.password && u.password !== "••••" && nd(u.password) === pwInput);
     }
 
     if (!matchedUser) {
-        if (el('passwordError')) el('passwordError').classList.remove('hidden');
+        if (errEl) {
+            errEl.textContent = "رمز الدخول غير صحيح!";
+            errEl.classList.remove('hidden');
+        }
+        if (el('passwordInput')) el('passwordInput').select();
         return;
     }
 
     currentUser = matchedUser;
     hide('passwordModal');
-    if (el('passwordError')) el('passwordError').classList.add('hidden');
+    if (errEl) errEl.classList.add('hidden');
     el('passwordInput').blur();
+
     await initApp();
-    if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
+
+    if (isMasterRecoveryLogin) {
+        showPasteToast("تم الدخول بالرمز السري للطوارئ 🔑", "أهلاً بك بصلاحية المدير العام");
+    } else if (currentUser && !currentUser.isAdmin && typeof captureEmployeeLastSeenLocation === 'function') {
         captureEmployeeLastSeenLocation(currentUser);
     }
 }
