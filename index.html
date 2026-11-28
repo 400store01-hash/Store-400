@@ -4484,7 +4484,113 @@ async function syncToExternalCloud(isSilent = false, allowStaffArchivePush = fal
             const sig = catalogSig();
             let force = false;
             if (m.catalogConflict) {
-                if (!isSilent) force = confirm("تعارض: قاعدة الأصناف على السحابة أحدث من نسختك المحلية.\n\nموافق = استبدال نسخة السحابة بنسخة
+                if (!isSilent) {
+                    force = confirm("تعارض: قاعدة الأصناف على السحابة أحدث من نسختك المحلية.\n\nموافق = استبدال نسخة السحابة بنسختك المحلية\nإلغاء = الإبقاء على قاعدة الأصناف السحابية");
+                }
+                if (!force) {
+                    delete payload.catalogList;
+                    delete payload.shortcutList;
+                    if (Array.isArray(cloud.catalogList) && cloud.catalogList.length > 0) {
+                        catalogList = cloud.catalogList.map(item => nCat(item));
+                        if (Array.isArray(cloud.shortcutList)) shortcutList = cloud.shortcutList;
+                        lastSyncedCatalogSig = catalogSig();
+                        await refreshUIAfterCloudChange();
+                    }
+                }
+            }
+            if (sig !== lastSyncedCatalogSig || force || !(Array.isArray(cloud.catalogList) && cloud.catalogList.length > 0)) {
+                pushedCatalog = true;
+            } else {
+                delete payload.catalogList;
+                delete payload.shortcutList;
+            }
+            payload.dbVersion = Math.max(lastCloudDbVersion, Number(cloud.dbVersion) || 0, currentDbVersion || 51) + 1;
+        }
+
+        const saveRes = await postCloudAction(url, { action: "SAVE_DB", payload });
+        if (!saveRes || !saveRes.ok) {
+            if (saveRes && saveRes.conflict) {
+                needsPush = { isSilent: true, allowStaffArchivePush, lightStaffMode };
+                setCloudStatusPill("تعارض نسخة — أعد المزامنة", "text-amber-600");
+                if (!isSilent) showPasteToast("تعارض نسخة ⚠", saveRes.error || "يوجد تحديث أحدث على السحابة");
+                return;
+            }
+            throw new Error((saveRes && saveRes.error) || "فشل الحفظ في السحابة");
+        }
+
+        needsPush = null;
+        if (saveRes.dbVersion) {
+            lastCloudDbVersion = Math.max(lastCloudDbVersion, Number(saveRes.dbVersion) || 0);
+            currentDbVersion = Math.max(currentDbVersion, lastCloudDbVersion);
+        }
+        if (pushedCatalog) lastSyncedCatalogSig = catalogSig();
+        await saveToIndexedDB(getFullDatabasePayload(false));
+        setCloudStatusPill("متصل بالسحابة ✓", "text-emerald-600");
+        if (!isSilent) showPasteToast("تم الحفظ في السحابة ✓", "تمت المزامنة بنجاح");
+    } catch (err) {
+        console.error("Cloud sync error:", err);
+        needsPush = { isSilent: true, allowStaffArchivePush, lightStaffMode };
+        setCloudStatusPill("تعذر الاتصال بالسحابة", "text-rose-600");
+        if (!isSilent && err?.message !== 'unauthorized') {
+            showPasteToast("تعذر الرفع للسحابة ⚠", "حُفظت البيانات محلياً وستُرفع تلقائياً عند عودة الاتصال");
+        }
+    } finally {
+        syncInFlight = false;
+        if (queuedPush) {
+            const next = queuedPush;
+            queuedPush = null;
+            syncToExternalCloud(next.isSilent, next.allowStaffArchivePush, next.lightStaffMode);
+        }
+    }
+}
+
+async function restoreFromExternalCloud(isSilent = false, opts = {}) {
+    if (!sessionToken) return false;
+    const url = (el('cloudBackupUrlInput')?.value || appSettings.cloudWebhookUrl || DEFAULT_CLOUD_WEBHOOK_URL).trim();
+    if (!url) { if (!isSilent) alert("ضع رابط الخادم السحابي أولاً!"); return false; }
+    if (!isSilent && !confirm("سحب وتحديث البيانات من السحابة الآن؟")) return false;
+    setCloudStatusPill("جاري السحب...", "text-amber-600");
+    try {
+        const res = await postCloudAction(url, { action: "GET_DB" });
+        if (!res || !res.ok || !res.data) throw new Error((res && res.error) || "بيانات السحابة فارغة");
+        const before = cloudDataSig();
+        const m = mergeCloudPayload(res.data, opts);
+        if (before !== cloudDataSig() || m.catalogReplaced || m.workingLoaded) {
+            await refreshUIAfterCloudChange();
+        } else {
+            await saveToIndexedDB(getFullDatabasePayload(false));
+        }
+        if (m.catalogConflict && Date.now() - lastConflictToastAt > 60000) {
+            lastConflictToastAt = Date.now();
+            showPasteToast("تنبيه تعارض ⚠", "يوجد تعديل محلي غير مرفوع على قاعدة الأصناف");
+        }
+        setCloudStatusPill("متصل بالسحابة ✓", "text-emerald-600");
+        if (!isSilent) showPasteToast("تم التحديث من السحابة ✓", "تم سحب ودمج أحدث البيانات");
+        return true;
+    } catch (err) {
+        console.error("Cloud pull error:", err);
+        setCloudStatusPill("غير متصل بالسحابة", "text-rose-600");
+        if (!isSilent && err?.message !== 'unauthorized') {
+            alert("تعذر السحب من السحابة: " + (err?.message || err));
+        }
+        return false;
+    }
+}
+
+function updateUserField(userId, field, val) {
+    if (!currentUser?.isAdmin) return;
+    const u = appSettings.usersList.find(x => x.id === userId);
+    if (!u) return;
+    const cleaned = cleanText(String(val || '').trim());
+    if (!cleaned) { renderUsersManagementTable(); return; }
+    if (u[field] !== cleaned) {
+        u[field] = cleaned;
+        touch(u);
+        ensureUsersListInitialized();
+        saveAppState(true);
+        showPasteToast("تم تحديث الاسم ✓", cleaned);
+    }
+}
 
 async function manualCloudPullNow() {
     showPasteToast("جاري السحب من السحابة ⏳", "تحديث الطلبات والأرشيف...");
